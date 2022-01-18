@@ -45,7 +45,7 @@ export default class PersistentStore extends Store{
 
                 return {
                     inserted: newObjects,
-                    updates: edited,
+                    updated: edited,
                     deleted: deleted
                 }
             });
