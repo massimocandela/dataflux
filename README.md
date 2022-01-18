@@ -187,7 +187,7 @@ The store can be configured with the following options:
 
 
 
-### Editing objects
+## Editing objects
 The option `autoSave` can be `true`, `false`, a number (milliseconds).
 
 * When `autoSave` is set to `false`, the following operations are equivalent:
@@ -212,7 +212,7 @@ The option `autoSave` can be `true`, `false`, a number (milliseconds).
   The store will perform as if the `autoSave` was set to `true`; hence, changes performed with `.set(attribute, value)` are synced. However, it will periodically attempt also a `store.save()`. Since `store.save()` is always able to recognize edited objects, also changes directly operated on a property of the object (`object.name = "Dante"`) are synced.
 
 
-### API interaction
+## API interaction
 DataFlux is able to identify three sets of objects: inserted, updated, deleted.
 Each of these set is synced to the server with POST, PUT, and DELETE REST operations, respectively.
 
@@ -245,7 +245,7 @@ author1.delete(author1);
 
 ```
 
-#### REST API format
+### REST API format
 
 The APIs must return/accept an array of JSON objects or a single object. If your API uses a different format, use a function in the [model creation](#model-creation) to transform the data.
 
@@ -344,18 +344,60 @@ Or, even more flexible, you can pass functions and handle yourself the operation
 ```js
 const options = {
   retrieve: () => {
-        // 1) get the data from the API 
-        // 2) tranforms the data
-        // 3) return the data to the store
-      return Promise.resolve(data);
+    // 1) get the data from the API 
+    // 2) tranforms the data
+    // 3) return the data to the store
+    return Promise.resolve(data);
   },
   insert: (data) => {
-        // 1) recieve the data from the store
-        // 2) transform the data however you like 
-        // 3) send data to server
+    // 1) recieve the data from the store
+    // 2) transform the data however you like 
+    // 3) send data to server
     return Promise.resolve();
   }
 };
 
 const book = new Model("book", options);
 ```
+
+## Relations among models
+
+Optionally, you can create relations among models.
+
+For example, you can declare that an author has one or more objects of type book in the following way:
+
+```js
+const author = new Model("author", `https://rest.example.net/api/v1/authors`);
+const book = new Model("book", `https://rest.example.net/api/v1/books`);
+
+author.addRelation(book, "id", "authorId");
+```
+In this example, we added an explicit relation between `author.id` and `book.authorId`. This means that the store will return as books belonging to the author, all the books having `authorId` equals to the id of the author.
+
+Now all the author objects will have the method `getRelation(type, filterFunction)` that can be used to retrieve a relation associated with the author. The `type` defines the model type (in our case, 'book'), the `filterFunction` is an optional parameter that can be passed in case the output needs an additional filtering.
+
+For example, imagine you have the `author1` object defined in the examples above (Dante Alighieri):
+
+```js
+author1.getRelation("book")
+  .then(dantesBooks => {
+    // Do something with Dante's books
+  });
+
+// Or..
+author1.getRelation("book", (book) => book.price < 20)
+        .then(cheapDantesBooks => {
+          // Do something with Dante's books cheaper than 20
+        });
+```
+
+Other ways to declare relations:
+
+* `account.addRelation("user", "userId")`
+  
+  When the third parameter is missing, it defaults to "id" (i.e., it is the shorter version of `account.addRelation("user", "userId", "id")`). This means that the store will return as user of the account, the user having `id` equals to `account.userId`.
+
+
+* `author.addRelation("book", filterFunction)`
+
+  When the second parameter is a function, the function will be used by the store to filter the objects of the connected model. The `filterFunction` receives two parameters `(parentObject, possibleChildObject)` and returns a boolean. In this way you can create complex relations based on multiple fields/factors; e.g., a `filterFunction` equals to `(author, book) => author.name == book.authorName && author.surname == book.authorSurname`.
