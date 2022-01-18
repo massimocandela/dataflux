@@ -1,6 +1,6 @@
-## Projectname
+## DataFlux
 
-Projectname is a JavaScript library for automatically generating ORM-like data layers interfacing with REST APIs.
+DataFlux is a JavaScript library that automatically interfaces with your REST APIs to create a 2-way-synced local data store. If used with React, it transparently manages data propagation in the state.
 
 * **Automated:** Given a collection of urls pointing to REST APIs, it creates a data layer (called `store`) able to retrieve, insert, update, delete the objects returned by the API. When objects are edited by the client, the store detects the edited objects and dispatches targeted updates to the APIs. You will **work on local JS objects** (e.g., you can do `myObject.name = "test"`, or `myObject.destroy()`) and **ignore the synchronization with the server** that will happen automagically.
 
@@ -8,20 +8,20 @@ Projectname is a JavaScript library for automatically generating ORM-like data l
 * **Observable:** Queries to the store are observable. If you ask the store one or more objects (e.g., a list of books you want to display on your website), the store will track what subset of data you are using and push updates every time any of the object in the subset is subject to a change (e.g., a title of a book displayed on your page is edited or a new book matching the search criteria is added). **This is extremely useful with React!**
 
 
-* **Full control:** If you don't like the store to manage the ORM operations automatically, you can set `autoSave: false` and explicitly tell the store when to save the edited objects (i.e., `store.save()`). Additionally, you can control the single objects individually (e.g., `myObject.save()`). You can also set `lazyLoad: true` and only retrieve the data from the API when requested (e.g., if you never search for books, these will never be retrieved)
+* **Full control:** If you don't like the store to manage the ORM operations automatically, you can set `autoSave: false` and explicitly tell the store when to save (i.e., `store.save()`). Additionally, you can control the single objects individually (e.g., `myObject.save()`). You can also set `lazyLoad: true` and only retrieve the data from the API when requested (e.g., if you never search for books, these will never be retrieved)
 
 
 ## Installation
 
 ```sh
-npm install projectname
+npm install dataflux
 ```
 
 ## Examples
 
 Consider the following store/model declaration common to all the examples below:
 ```js
-import {Store, Model} from "projectname";
+import {Store, Model} from "dataflux";
 
 const store = new Store();
 const author = new Model("author", `https://rest.example.net/api/v1/authors`);
@@ -30,8 +30,10 @@ const book = new Model("book", `https://rest.example.net/api/v1/books`);
 store.addModel(author);
 store.addModel(book);
 
-author.addRelation(book, "id", "authorId"); // Add a object relation between author.id and book.authorId
+author.addRelation(book, "id", "authorId"); // Add an object relation between author.id and book.authorId
 ```
+The store can be initialized with [various options](#configuration).
+The creation of a model requires at least a name and an url. GET, POST, PUT, DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#model-creation)
 
 ### Example 1
 
@@ -40,11 +42,11 @@ Retrieve and edit an author not knowing the ID:
 ```js
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
-    .then(([author]) => {
-        author.set("country", "Italy");
-        author.set("type", "poet");
-        // Nothing else to do, the store does a single PUT request to the model's API about the edited object
-    });
+        .then(([author]) => {
+          author.set("country", "Italy");
+          author.set("type", "poet");
+          // Nothing else to do, the store does a single PUT request to the model's API about the edited object
+        });
 ```
 
 > You don't necessarily need to use `object.set` to edit an object attribute. You could do `author.country = "Italy"`. However, this approach relies on a periodic detection of changes (while `.set` triggers an update immediately). Check the `autoSave` option for more information
@@ -63,13 +65,13 @@ The same example above now becomes:
 ```js
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
-    .then(([author]) => {
-        // When autoSave = false, you can still use author.set, but there is no actual benefit
-        author.country = "Italy"
-        author.type = "poet"
+        .then(([author]) => {
+          // When autoSave = false, you can still use author.set, but there is no actual benefit
+          author.country = "Italy"
+          author.type = "poet"
 
-        store.save(); // Even if we changed only one author, prefer always store.save() to author.save()
-    });
+          store.save(); // Even if we changed only one author, prefer always store.save() to author.save()
+        });
 ```
 
 ### Example 3
@@ -91,9 +93,9 @@ author.destroy();
 Or destroy a collection of authors you already selected
 ```js
 store.find("author", ({name}) => name.startsWith("A"))
-    .then(authors => {
-        store.delete(authors);
-    });
+        .then(authors => {
+          store.delete(authors);
+        });
 ```
 ### Example 4
 
@@ -110,7 +112,7 @@ If you use `subscribe` instead of `find`, you can provide a callback to be invok
 
 ```js
 const drawBooksCallback = (books) => {
-    // Do something with the books
+  // Do something with the books
 };
 
 // Get all books with a price < 20
@@ -120,6 +122,14 @@ store.subscribe("book", drawBooks, ({price}) => price < 20);
 If now somewhere a book is inserted/deleted/edited:
 * if the book has `price < 20`,  `drawBooksCallback` will be called again with the new dataset;
 * if the book has `price > 20`,  `drawBooksCallback` will NOT be called again (because the new book doesn't impact our selection).
+
+You can terminate the subscription with `store.unsubscribe()`:
+
+```js
+const subKey = store.subscribe("book", drawBooks, ({price}) => price < 20); // Subscribe
+
+store.unsubscribe(subKey); // Unsubscribe
+```
 
 ### Example 6 - Observability + React
 
@@ -131,35 +141,221 @@ You can use two methods: `findOne`, and `findAll`.
 React Component example
 ```jsx
 class MyComponent extends React.Component {
-    constructor(props) {
-        super(props);
-    }
+  constructor(props) {
+    super(props);
+  }
 
-    componentDidMount() {
-        // Get all books with a price < 20
-        store.findAll("book", "books", this, ({price}) => price < 20);
-        // Every time the dataset changes, a setState will be automatically performed.
-        // An attribute "books" will be added/updated in the state (the rest of the 
-        // state remains unchanged).
-        
-        // findAll is a syntactic sugar for:
-        // const callback = (books) => {this.setState({...this.state, books})};
-        // store.subscribe("book", callback, ({price}) => price < 20);
-    }
+  componentDidMount() {
+    // Get all books with a price < 20
+    store.findAll("book", "books", this, ({price}) => price < 20);
+    // Every time the dataset changes, a setState will be automatically performed.
+    // An attribute "books" will be added/updated in the state (the rest of the 
+    // state remains unchanged).
 
-    render(){
-        const {books} = this.state;
-        
-        return books.map(book => {
-            return <Book
-                // onTitleChange will alter the book and so the current state of "books"
-                onTitleChange={(title) => book.set("title", title)}
-                // alternatively, onTitleChange={store.handleChange(book, "title")} 
-                // is a syntactic sugar of the function above
-            />
-        });
-    }
+    // findAll is a syntactic sugar for:
+    // const callback = (books) => {this.setState({...this.state, books})};
+    // store.subscribe("book", callback, ({price}) => price < 20);
+  }
+
+  render(){
+    const {books} = this.state;
+
+    return books.map(book => {
+      return <Book
+              // onTitleChange will alter the book and so the current state of "books"
+              onTitleChange={(title) => book.set("title", title)}
+              // alternatively, onTitleChange={store.handleChange(book, "title")} 
+              // is a syntactic sugar of the function above
+      />
+    });
+  }
 }
 ```
 
-When the component will mount, the `findAll` subscription will be terminated.
+When the component will unmount, the `findAll` subscription will be terminated.
+
+## Configuration
+
+The store can be configured with the following options:
+
+
+| Option    | Description                                                                                                                                                                                                                                                                                                                                                                              | Default |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| autoSave  | It can be `true`, `false`, or an amount of milliseconds (integer). If `false`, you will have to perform `store.save()` manually. If `true`, the store will automatically perform `save()` when objects change. If an amount of milliseconds is provided, the objects are saved periodically AND when a change is detected. See [Editing objects](#editing-objects) for more information. | 3000    |
+| saveDelay | An amount of milliseconds used to defer synching operations with the server. It triggers `store.save()` milliseconds after the last change on the store's objects is detedect. This allows to bundle together multiple changes operated by an interacting user. See [Editing objects](#editing-objects) for more information.                                                            | 1000    |
+| lazyLoad  | A boolean. If set to `false`, the store is pre-populated with all the models' objects. If set to `true`, models' objects are loaded only on first usage (e.g., 'find', 'subscribe', 'getRelation'). LazyLoad operates per model, only the objects of the used models are loaded.                                                                                                         | false   |
+
+
+
+### Editing objects
+The option `autoSave` can be `true`, `false`, a number (milliseconds).
+
+* When `autoSave` is set to `false`, the following operations are equivalent:
+    ```js
+    object.set("name", "Dante");
+    
+    object.name = "Dante";
+    ```
+  No matter which of the two approaches you use, the command `store.save()` must be invoked to sync the changes with the server.
+
+  > The command `store.save()` is always able to recognize changed objects that need to be persisted.
+
+
+* **When `autoSave` is set to `true`, the above operations are NOT equivalent.**
+
+  Using `.set(attribute, value)` informs the store that an object changed, while changing directly a property the object (`object.name = "Dante"`) does not. Since the store is not aware of the changes, they will not be synced with the server. **To avoid this, always use `.set(attribute, value)`.**
+
+  > The commands `store.insert()`, `store.delete()`, and `object.destroy()` are always visible to the store, and so syncing is always performed when `autoSave` is `true`.
+
+* **When `autoSave` is set to an amount of milliseconds, the above operations are still NOT equivalent, but...**
+
+  The store will perform as if the `autoSave` was set to `true`; hence, changes performed with `.set(attribute, value)` are synced. However, it will periodically attempt also a `store.save()`. Since `store.save()` is always able to recognize edited objects, also changes directly operated on a property of the object (`object.name = "Dante"`) are synced.
+
+
+### API interaction
+DataFlux is able to identify three sets of objects: inserted, updated, deleted.
+Each of these set is synced to the server with POST, PUT, and DELETE REST operations, respectively.
+
+The interaction with the API is handled automatically, multiple requests are prevented and operations are bundled as much as possible.
+
+For example (with autoSave):
+```js
+store.find('book', (book) => book.price < 20);
+store.find('book', (book) => book.price > 60);
+// The commands above will correspond to 1 single query to the REST API.
+
+author1.set("name", "Dante");
+author2.set("name", "Italo");
+author3.set("name", "Umberto");
+author4.name = "Primo";
+// The commands above will correspond to 1 single query to the REST API, 
+// no matter how many editing operations.
+
+
+author1.set("name", "Dante");
+setTimeout(() => author2.set("name", "Italo"), 10000); // To "emulate" a user interaction.
+// The commands above will correspond to 2 queries to the REST API
+
+const author1 = {surname: "Alighieri"};
+store.insert(author1);
+author1.set("name", "Dante");
+author1.delete(author1);
+// The commands above will not produce any query to the REST API since 
+// the initial and final states of the store are the same (object created and removed).
+
+```
+
+#### REST API format
+
+The APIs must return/accept an array of JSON objects or a single object. If your API uses a different format, use a function in the [model creation](#model-creation) to transform the data.
+
+The following format is automatically accepted, and it will create two objects.
+
+```json
+[
+  {
+    "name": "Dante",
+    "surname": "Alighieri",
+    "reviews": [...]
+  },
+  {
+    "name": "Giovanni",
+    "surname": "Boccaccio",
+    "reviews": [...]
+  }
+]
+```
+
+The following format is automatically accepted, and it will create one object.
+
+```json
+{
+  "username": "Massimo",
+  "website": "https://massimocandela.com",
+  "otherParameters": {
+    ...
+  }
+}
+```
+
+The following format will create a single object, which probably you don't want. Use a function in [model creation](#model-creation) to unwrap the data.
+
+```json
+{
+  "books": [],
+  "authors": []
+}
+```
+
+## Model creation
+
+A model can be simply created with:
+
+```js
+const book = new Model("book", `https://rest.example.net/api/v1/books`);
+```
+
+However, in many cases more complex APIs require different settings for the various operations.
+
+Instead of an url, you can pass options to perform more elaborated Model's initialization.
+
+```js
+const options = {
+  retrieve: {
+    method: "get",
+    url: "https://rest.example.net/api/v1/books"
+  },
+  insert: {
+    method: "post",
+    url: "https://rest.example.net/api/v1/books"
+  },
+  update: {
+    method: "put",
+    url: "https://rest.example.net/api/v1/books"
+  },
+  delete: {
+    method: "delete",
+    url: "https://rest.example.net/api/v1/books"
+  }
+};
+
+const book = new Model("book", options);
+```
+You don't necessarily need to specify a url for each operation. If a url is not specified for an operation, the url defined for the `GET` operation is used.
+
+For example, if you want to perform inserts and updates with just `PUT`, you can simply do:
+```js
+const options = {
+  retrieve: {
+    method: "get",
+    url: "https://rest.example.net/api/v1/books"
+  },
+  insert: {
+    method: "put" // It will use the same GET url
+  }
+};
+
+const book = new Model("book", options);
+```
+
+Or, even more flexible, you can pass functions and handle yourself the operations. The functions MUST return promises.
+
+
+```js
+const options = {
+  retrieve: () => {
+        // 1) get the data from the API 
+        // 2) tranforms the data
+        // 3) return the data to the store
+      return Promise.resolve(data);
+  },
+  insert: (data) => {
+        // 1) recieve the data from the store
+        // 2) transform the data however you like 
+        // 3) send data to server
+    return Promise.resolve();
+  }
+};
+
+const book = new Model("book", options);
+```

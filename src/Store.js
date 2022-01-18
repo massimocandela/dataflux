@@ -4,7 +4,7 @@ import fingerprint from "./fingerprint";
 export default class Store {
     constructor(options={}) {
         this.options = {
-            autoSave: options.autoSave || false,
+            autoSave: options.autoSave || 3000,
             saveDelay: options.autoSave || 1000,
             lazyLoad: options.lazyLoad || false
         };
