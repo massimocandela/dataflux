@@ -1,6 +1,6 @@
 {
   "name": "dataflux",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "DataFlux, automatically interfaces with your REST APIs to create a 2-way-synced local data store. Transparently manages data propagation in the React state.",
   "main": "dist/index.js",
   "bin": "dist/index.js",
@@ -35,8 +35,7 @@
         "npm ci"
       ],
       "after:bump": [
-        "npm run compile",
-        "git add dist/"
+        "npm run compile"
       ],
       "after:release": [
         "echo Successfully released ${name} v${version} to ${repo.repository}.",
