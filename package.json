@@ -14,11 +14,21 @@
     "name": "Massimo Candela",
     "url": "https://massimocandela.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/massimocandela/dataflux.git"
   },
+  "keywords": [
+    "data",
+    "React",
+    "REST",
+    "ORM",
+    "browser",
+    "api",
+    "observable",
+    "layer"
+  ],
   "release-it": {
     "hooks": {
       "before:init": [
