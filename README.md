@@ -400,4 +400,4 @@ Other ways to declare relations:
 
 * `author.addRelation("book", filterFunction)`
 
-  When the second parameter is a function, the function will be used by the store to filter the objects of the connected model. The `filterFunction` receives two parameters `(parentObject, possibleChildObject)` and returns a boolean. In this way you can create complex relations based on multiple fields/factors; e.g., a `filterFunction` equals to `(author, book) => author.name == book.authorName && author.surname == book.authorSurname`.
+  When the second parameter is a function, the function will be used by the store to filter the objects of the connected model. The `filterFunction` receives two parameters `(parentObject, possibleChildObject)` and returns a boolean. In this way you can create complex relations; e.g., a `filterFunction` equal to `(author, book) => author.name == book.authorName && author.surname == book.authorSurname` creates a relation based on two attributes.
