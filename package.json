@@ -1,0 +1,88 @@
+{
+  "name": "dataflux",
+  "version": "1.0.0",
+  "description": "DataFlux, automatically interfaces with your REST APIs to create a 2-way-synced local data store. Transparently manages data propagation in the React state.",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "scripts": {
+    "babel": "node_modules/.bin/babel",
+    "test": "./node_modules/.bin/mocha tests --require @babel/register",
+    "compile": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist",
+    "release": "dotenv release-it"
+  },
+  "author": {
+    "name": "Massimo Candela",
+    "url": "https://massimocandela.com"
+  },
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/massimocandela/dataflux.git"
+  },
+  "release-it": {
+    "hooks": {
+      "before:init": [
+        "npm ci"
+      ],
+      "after:bump": [
+        "npm run compile",
+        "git add dist/"
+      ],
+      "after:release": [
+        "echo Successfully released ${name} v${version} to ${repo.repository}.",
+        "rm -r dist/"
+      ]
+    },
+    "git": {
+      "changelog": "git log --pretty=format:\"* %s (%h)\" ${from}...${to}",
+      "requireCleanWorkingDir": true,
+      "requireBranch": "main",
+      "requireUpstream": true,
+      "requireCommits": false,
+      "addUntrackedFiles": false,
+      "commit": true,
+      "commitMessage": "Release v${version}",
+      "commitArgs": [],
+      "tag": true,
+      "tagName": null,
+      "tagAnnotation": "Release v${version}",
+      "tagArgs": [],
+      "push": true,
+      "pushArgs": [
+        "--follow-tags"
+      ],
+      "pushRepo": ""
+    },
+    "gitlab": {
+      "release": false
+    },
+    "npm": {
+      "publish": false
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}",
+      "tokenRef": "GITHUB_TOKEN",
+      "origin": null,
+      "skipChecks": false
+    }
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.16.8",
+    "@babel/core": "^7.16.7",
+    "@babel/node": "^7.16.8",
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
+    "@babel/plugin-proposal-object-rest-spread": "^7.16.7",
+    "@babel/plugin-transform-async-to-generator": "^7.16.8",
+    "@babel/plugin-transform-runtime": "^7.16.8",
+    "@babel/preset-env": "^7.16.8",
+    "@babel/preset-react": "^7.16.7"
+  },
+  "dependencies": {
+    "axios": "^0.25.0",
+    "batch-promises": "^0.0.3",
+    "md5": "^2.3.0",
+    "uuid": "^8.3.2"
+  },
+  "resolutions": {}
+}
