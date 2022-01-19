@@ -38,7 +38,7 @@ The store can be initialized with [various options](#configuration).
 
 The creation of a model requires at least a name and an url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
 
-A JS object is automatically created for each item returned by the API, for each model. The object has the same properties of the JSON item plus some high-level method (see [object methods](#object-methods)).
+A JS object is automatically created for each item returned by the API, for each model. The object has the same properties of the JSON item plus some high-level method (see [objects methods](#objects-methods)).
 **All the objects are indexed in the store.**
 
 ### Example 1
@@ -311,10 +311,21 @@ author1.getRelation("book", (book) => book.price < 20)
           // Do something with Dante's books cheaper than 20
         });
 ```
+## Store methods
 
+The store has the following method.
 
-## Object methods
-Each object created is enriched with a series of method.
+| Method                       | Description                                                                                                                                                |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| addModel(model)              | Introduce a new model to the store. If lazyLoad = false (default), the model is populated with the objects coming from the API.                            |
+| get(type, id)                | It allows to retrieve an object based on its type and store's ID (see `getId()` in [objects methods](#objects-methods). The type is the name of the model. |
+| find(type,filterFunction)    | The promise-oriented method to access objects given a type and a filter function. See [example 1](#example-1).                                             |
+| delete(objects)              | It deletes an array of objects. See [example 1](#example-3).                                                                                               |
+| delete(type, filterFunction) | It deleted objects given an array and a filter function. See [example 1](#example-3).                                                                      |
+| insert(type, object)         | It creates a new object of a given type and inserts it in the store.                                                                                       |
+
+## Objects methods
+Each object created is enriched with the following methods.
 
 
 | Method                             | Description                                                                                                                                                                                                                                      |
