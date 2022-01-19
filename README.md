@@ -154,9 +154,9 @@ class MyComponent extends React.Component {
   componentDidMount() {
     // Get all books with a price < 20
     store.findAll("book", "books", this, ({price}) => price < 20);
-    // Every time the dataset changes, a setState will be automatically performed.
-    // An attribute "books" will be added/updated in the state (the rest of the 
-    // state remains unchanged).
+    // Every time the dataset changes, a setState will be automatically 
+    // performed. An attribute "books" will be added/updated in the 
+    // state (the rest of the state remains unchanged).
 
     // findAll is a syntactic sugar for:
     // const callback = (books) => {this.setState({...this.state, books})};
@@ -166,19 +166,23 @@ class MyComponent extends React.Component {
   render(){
     const {books} = this.state;
 
-    return books.map(book => {
-      return <Book
-              // onTitleChange will alter the book and so the current state of "books"
-              onTitleChange={(title) => book.set("title", title)}
-              // alternatively, onTitleChange={store.handleChange(book, "title")} 
-              // is a syntactic sugar of the function above
-      />
-    });
+    return books.map(book =>
+            <Book
+                    onTitleChange={(title) => book.set("title", title)}
+                    // onTitleChange will alter the book and so the current 
+                    // state of "books" (a setState will be performed).
+                    //
+                    // Alternatively:
+                    // onTitleChange={store.handleChange(book, "title")} 
+                    // is a syntactic sugar of the function above
+            />);
   }
 }
 ```
 
-When the component will unmount, the `findAll` subscription will be terminated.
+The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the research, the first is returned).
+
+When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll` injects the unsubscribe call inside `componentWillUnmount`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe` and `store.unsubscribe` instead of `store.findAll`, to avoid side effects when the component is unmounted.
 
 ## Configuration
 
@@ -301,9 +305,9 @@ For example, imagine you have the `author1` object defined in the examples above
 
 ```js
 author1.getRelation("book")
-  .then(dantesBooks => {
-    // Do something with Dante's books
-  });
+        .then(dantesBooks => {
+          // Do something with Dante's books
+        });
 
 // Or..
 author1.getRelation("book", (book) => book.price < 20)
