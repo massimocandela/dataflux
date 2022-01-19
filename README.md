@@ -32,8 +32,14 @@ store.addModel(book);
 
 author.addRelation(book, "id", "authorId"); // Add an object relation between author.id and book.authorId
 ```
+
+
 The store can be initialized with [various options](#configuration).
-The creation of a model requires at least a name and an url. GET, POST, PUT, DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#model-creation)
+
+The creation of a model requires at least a name and an url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
+
+A JS object is automatically created for each item returned by the API, for each model. The object has the same properties of the JSON item plus some high-level method (see [object methods](#object-methods)).
+**All the objects are indexed in the store.**
 
 ### Example 1
 
@@ -187,107 +193,7 @@ The store can be configured with the following options:
 
 
 
-## Editing objects
-The option `autoSave` can be `true`, `false`, a number (milliseconds).
-
-* When `autoSave` is set to `false`, the following operations are equivalent:
-    ```js
-    object.set("name", "Dante");
-    
-    object.name = "Dante";
-    ```
-  No matter which of the two approaches you use, the command `store.save()` must be invoked to sync the changes with the server.
-
-  > The command `store.save()` is always able to recognize changed objects that need to be persisted.
-
-
-* **When `autoSave` is set to `true`, the above operations are NOT equivalent.**
-
-  Using `.set(attribute, value)` informs the store that an object changed, while changing directly a property the object (`object.name = "Dante"`) does not. Since the store is not aware of the changes, they will not be synced with the server. **To avoid this, always use `.set(attribute, value)`.**
-
-  > The commands `store.insert()`, `store.delete()`, and `object.destroy()` are always visible to the store, and so syncing is always performed when `autoSave` is `true`.
-
-* **When `autoSave` is set to an amount of milliseconds, the above operations are still NOT equivalent, but...**
-
-  The store will perform as if the `autoSave` was set to `true`; hence, changes performed with `.set(attribute, value)` are synced. However, it will periodically attempt also a `store.save()`. Since `store.save()` is always able to recognize edited objects, also changes directly operated on a property of the object (`object.name = "Dante"`) are synced.
-
-
-## API interaction
-DataFlux is able to identify three sets of objects: inserted, updated, deleted.
-Each of these set is synced to the server with POST, PUT, and DELETE REST operations, respectively.
-
-The interaction with the API is handled automatically, multiple requests are prevented and operations are bundled as much as possible.
-
-For example (with autoSave):
-```js
-store.find('book', (book) => book.price < 20);
-store.find('book', (book) => book.price > 60);
-// The commands above will correspond to 1 single query to the REST API.
-
-author1.set("name", "Dante");
-author2.set("name", "Italo");
-author3.set("name", "Umberto");
-author4.name = "Primo";
-// The commands above will correspond to 1 single query to the REST API, 
-// no matter how many editing operations.
-
-
-author1.set("name", "Dante");
-setTimeout(() => author2.set("name", "Italo"), 10000); // To "emulate" a user interaction.
-// The commands above will correspond to 2 queries to the REST API
-
-const author1 = {surname: "Alighieri"};
-store.insert(author1);
-author1.set("name", "Dante");
-author1.delete(author1);
-// The commands above will not produce any query to the REST API since 
-// the initial and final states of the store are the same (object created and removed).
-
-```
-
-### REST API format
-
-The APIs must return/accept an array of JSON objects or a single object. If your API uses a different format, use a function in the [model creation](#model-creation) to transform the data.
-
-The following format is automatically accepted, and it will create two objects.
-
-```json
-[
-  {
-    "name": "Dante",
-    "surname": "Alighieri",
-    "reviews": [...]
-  },
-  {
-    "name": "Giovanni",
-    "surname": "Boccaccio",
-    "reviews": [...]
-  }
-]
-```
-
-The following format is automatically accepted, and it will create one object.
-
-```json
-{
-  "username": "Massimo",
-  "website": "https://massimocandela.com",
-  "otherParameters": {
-    ...
-  }
-}
-```
-
-The following format will create a single object, which probably you don't want. Use a function in [model creation](#model-creation) to unwrap the data.
-
-```json
-{
-  "books": [],
-  "authors": []
-}
-```
-
-## Model creation
+## Models creation
 
 A model can be simply created with:
 
@@ -297,7 +203,7 @@ const book = new Model("book", `https://rest.example.net/api/v1/books`);
 
 However, in many cases more complex APIs require different settings for the various operations.
 
-Instead of an url, you can pass options to perform more elaborated Model's initialization.
+Instead of an url, you can pass options to perform more elaborated Model's initializations.
 
 ```js
 const options = {
@@ -323,7 +229,7 @@ const book = new Model("book", options);
 ```
 You don't necessarily need to specify a url for each operation. If a url is not specified for an operation, the url defined for the `GET` operation is used.
 
-For example, if you want to perform inserts and updates with just `PUT`, you can simply do:
+For example, if you want to perform both inserts and updates with `PUT`, you can do:
 ```js
 const options = {
   retrieve: {
@@ -360,7 +266,7 @@ const options = {
 const book = new Model("book", options);
 ```
 
-## Relations among models
+### Model relations
 
 Optionally, you can create relations among models.
 
@@ -374,7 +280,22 @@ author.addRelation(book, "id", "authorId");
 ```
 In this example, we added an explicit relation between `author.id` and `book.authorId`. This means that the store will return as books belonging to the author, all the books having `authorId` equals to the id of the author.
 
-Now all the author objects will have the method `getRelation(type, filterFunction)` that can be used to retrieve a relation associated with the author. The `type` defines the model type (in our case, 'book'), the `filterFunction` is an optional parameter that can be passed in case the output needs an additional filtering.
+
+Other ways to declare relations:
+
+* `account.addRelation("user", "userId")`
+
+  When the third parameter is missing, it defaults to "id" (i.e., it is the shorter version of `account.addRelation("user", "userId", "id")`). This means that the store will return as user of the account, the user having `id` equals to `account.userId`.
+
+
+* `author.addRelation("book", filterFunction)`
+
+  When the second parameter is a function, the function will be used by the store to filter the objects of the connected model. The `filterFunction` receives two parameters `(parentObject, possibleChildObject)` and returns a boolean. In this way you can create complex relations; e.g., a `filterFunction` equal to `(author, book) => author.name == book.authorName && author.surname == book.authorSurname` creates a relation based on two attributes.
+
+
+#### Accessing model relations
+
+Once the relation between the author and the book models is declared, all the author objects will expose a method `getRelation(type, filterFunction)` that can be used to retrieve a relation associated with the author. The `type` defines the model type (in our case, 'book'), the `filterFunction` is an optional parameter that can be passed in case the output needs an additional filtering.
 
 For example, imagine you have the `author1` object defined in the examples above (Dante Alighieri):
 
@@ -391,13 +312,121 @@ author1.getRelation("book", (book) => book.price < 20)
         });
 ```
 
-Other ways to declare relations:
 
-* `account.addRelation("user", "userId")`
-  
-  When the third parameter is missing, it defaults to "id" (i.e., it is the shorter version of `account.addRelation("user", "userId", "id")`). This means that the store will return as user of the account, the user having `id` equals to `account.userId`.
+## Object methods
+Each object created is enriched with a series of method.
 
 
-* `author.addRelation("book", filterFunction)`
+| Method                             | Description                                                                                                                                                                                                                                      |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| getId()                            | It returns a unique ID used by the store to identify the object. The ID is unique inside a single model. Be aware, `object.id` and `objet.getId()` may return different values, since store's IDs can be different from the one of the REST API. |
+| set(attribute, value)              | A method to set an attribute to the object. It provides some advantages compared to doing `object.attribute = value`, these are discussed in [below](#editing-objects).                                                                          |
+| save()                             | Method to save the object. You can do `store.save()` instead.                                                                                                                                                                                    |
+| destroy()                          | Method to delete the object. You can do `store.delete()` instead.                                                                                                                                                                                |
+| get(attribute)                     | If you like symmetry and since you do `.set()` you would like to do also `.get()` of the attributes. It does not provide any advantage compared to accessing directly the attribute (e.g., `author.name`).                                       |
+| getRelation(model, filterFunction) | To get all the objects respecting a specific relation with this object (see [model relations](#model-relations)).                                                                                                                                |
+| toJSON()                           | It returns a pure JSON representation of the object.                                                                                                                                                                                             |
+| toString()                         | It returns a string representation of the object.                                                                                                                                                                                                |
+| getFingerprint()                   | It returns a hash of the object. The hash changes at every change of the object or of any nested object. Useful to detect object changes.                                                                                                        |
+| getModel()                         | It returns the model of this object. Mostly useful to do `object.getModel().getType()` and obtain a string defining the type of the object.                                                                                                      |
 
-  When the second parameter is a function, the function will be used by the store to filter the objects of the connected model. The `filterFunction` receives two parameters `(parentObject, possibleChildObject)` and returns a boolean. In this way you can create complex relations; e.g., a `filterFunction` equal to `(author, book) => author.name == book.authorName && author.surname == book.authorSurname` creates a relation based on two attributes.
+## Editing objects
+The option `autoSave` can be `true`, `false`, or a number (milliseconds).
+
+* When `autoSave` is set to `false`, the following operations are equivalent:
+    ```js
+    object.set("name", "Dante");
+    
+    object.name = "Dante";
+    ```
+  No matter which of the two approaches you use, the command `store.save()` must be invoked to sync the changes with the server.
+
+  > The command `store.save()` is always able to recognize changed objects that need to be persisted.
+
+
+* **When `autoSave` is set to `true`, the above operations are NOT equivalent.**
+
+  Using `.set(attribute, value)` informs the store that an object changed, while changing directly an attribute of the object (`object.name = "Dante"`) does not. Since the store is not aware of the changes, they will not be synced with the server. **To avoid this, always use `.set(attribute, value)`.**
+
+  > The commands `store.insert()`, `store.delete()`, and `object.destroy()` are always visible to the store, and so syncing is always performed when `autoSave` is `true`.
+
+* **When `autoSave` is set to an amount of milliseconds, the above operations are still NOT equivalent, but...**
+
+  The store will perform as if the `autoSave` was set to `true`; hence, changes performed with `.set(attribute, value)` are synced. However, it will periodically attempt also a `store.save()`. Since `store.save()` is always able to recognize edited objects, also changes directly operated on an attribute of the object (`object.name = "Dante"`) are synced.
+
+
+
+## API interaction
+DataFlux is able to identify three sets of objects: inserted, updated, deleted.
+Each of these set is synced with the server with POST, PUT, and DELETE REST operations, respectively.
+
+The interaction with the API is handled automatically, multiple requests are prevented and operations are bundled as much as possible.
+
+For example (with autoSave):
+```js
+store.find('book', (book) => book.price < 20);
+store.find('book', (book) => book.price > 60);
+// The commands above will correspond to 1 single query to the REST API.
+
+author1.set("name", "Dante");
+author2.set("name", "Italo");
+author3.set("name", "Umberto");
+author4.name = "Primo";
+// The commands above will correspond to 1 single query to the REST API, 
+// no matter how many editing operations.
+
+
+author1.set("name", "Dante");
+setTimeout(() => author2.set("name", "Italo"), 10000); // To "emulate" a user interaction.
+// The commands above will correspond to 2 queries to the REST API
+
+const author1 = {surname: "Alighieri"};
+store.insert(author1);
+author1.set("name", "Dante");
+store.delete(author1);
+// The commands above will not produce any query to the REST API since 
+// the initial and final states of the store are the same (object created and removed).
+
+```
+
+### REST API format
+
+The APIs must return/accept an array of JSON objects or a single object. If your API uses a different format, use a function in the [models creation](#models-creation) to transform the data.
+
+The following format is automatically accepted, and it will create two objects.
+
+```json
+[
+  {
+    "name": "Dante",
+    "surname": "Alighieri",
+    "reviews": [...]
+  },
+  {
+    "name": "Giovanni",
+    "surname": "Boccaccio",
+    "reviews": [...]
+  }
+]
+```
+
+The following format is automatically accepted, and it will create one object.
+
+```json
+{
+  "username": "Massimo",
+  "website": "https://massimocandela.com",
+  "otherParameters": {
+    ...
+  }
+}
+```
+
+The following format will create a single object, which probably you don't want. Use a function in [models creation](#models-creation) to unwrap the data.
+
+```json
+{
+  "books": [],
+  "authors": []
+}
+```
