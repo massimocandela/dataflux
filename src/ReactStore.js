@@ -16,6 +16,7 @@ const addSubscriptionToContext = (context, subKey) => { // I know...
 export default class ReactStore extends ObserverStore {
     constructor(options) {
         super(options);
+
     };
 
     findAll(type, stateAttribute, context, filterFunction) {

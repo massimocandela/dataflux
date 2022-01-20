@@ -1,26 +1,21 @@
-const md5 = require("md5");
+import crc32 from 'crc/crc32';
 
 const _getFingerprint = (object) => {
 
     switch(typeof(object)) {
         case "object":
-            return markType(object, (object !== null) ? getObjectFingerprint(object) : "null");
+            return `o:${(object !== null) ? getObjectFingerprint(object) : "null"}`;
         case "boolean":
-            return markType(object, object.toString());
+            return `b:${object?"t":"f"}`;
         case "function":
             throw new Error("You cannot pass a function as data item");
         case "number":
-            return markType(object, object.toString());
+            return `n:${object.toString()}`;
         case "string":
-            return markType(object, object);
+            return `s:${object}`;
         case "undefined":
-            return markType(object, "undefined");
+            return `u`;
     }
-};
-
-
-const markType = (object, fingerprint) => {
-    return typeof(object) + ":" + fingerprint;
 };
 
 const getObjectFingerprint = (value) => {
@@ -28,12 +23,12 @@ const getObjectFingerprint = (value) => {
     let buff = "";
 
     for (let key of sortedKeys) {
-        buff += key + "<" + fingerprint(value[key]) + ">";
+        buff += `${key}<${fingerprint(value[key])}>`;
     }
 
     return buff;
 };
 
 export default function fingerprint(object) {
-    return md5(_getFingerprint(object));
+    return crc32(_getFingerprint(object)).toString(16);
 }

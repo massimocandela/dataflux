@@ -18,7 +18,6 @@ export default class Obj {
         }
 
         this.getId = () => id
-
     };
 
     getFingerprint = () => {

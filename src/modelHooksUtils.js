@@ -1,6 +1,5 @@
-import axios from "axios";
 
-const getDataStringHook = (url, method="get", data=null) => {
+const getDataStringHook = (url, method="get", data=null, axios) => {
     return axios({
         url,
         method,
@@ -11,13 +10,27 @@ const getDataStringHook = (url, method="get", data=null) => {
 };
 
 const createHookItem = (optionItem, defaultMethod, defaultUrl) => {
-    if (typeof(optionItem) === "function") {
-        return optionItem;
-    } else {
-        return {
-            method: optionItem.method || defaultMethod,
-            url: optionItem.url || defaultUrl
-        };
+    switch(typeof(optionItem)) {
+        case "undefined":
+            if (!defaultUrl) {
+                console[console.warn?"warn":"log"](`The ${defaultMethod} operations will not work, there is no valid url or function for it.`);
+
+                return ()=> Promise.resolve([]);
+            } else {
+                return {
+                    method: defaultMethod,
+                    url: defaultUrl
+                };
+            }
+        case "function":
+            return (data)=> Promise.resolve(optionItem(data));
+        case "object":
+            return {
+                method: optionItem.method || defaultMethod,
+                url: optionItem.url || defaultUrl
+            };
+        default:
+            throw new Error(`Invalid ${defaultMethod} configuration`);
     }
 }
 
@@ -55,12 +68,12 @@ export const getHooksFromUrl = (url) => {
 };
 
 
-export const executeHook = (type, hook, data) => {
+export const executeHook = (type, hook, data, axios) => {
     const hookType = typeof(hook);
 
     switch(hookType) {
         case "object" :
-            return getDataStringHook(hook.url, hook.method, data);
+            return getDataStringHook(hook.url, hook.method, data, axios);
         case "function":
             return hook(data);
         default:

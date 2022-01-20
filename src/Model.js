@@ -2,8 +2,20 @@ import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUti
 import batchPromises from "batch-promises";
 
 export default class Model {
+    #type;
+    #store;
+    #includes;
+    #retrieveHook;
+    #updateHook;
+    #insertHook;
+    #deleteHook;
+    #singleItemQuery;
+    #batchSize;
+    
     constructor(name, options) {
-        this.__type = name;
+        this.#type = name;
+        this.#store = null;
+        this.#includes = {};
 
         if (!name || !options) {
             throw new Error("A Model requires at least a name and a hook");
@@ -12,89 +24,25 @@ export default class Model {
         const [retrieveHook, insertHook, updateHook, deleteHook] = (typeof(options) === "object") ?
             getHooksFromOptions(options) : getHooksFromUrl(options);
 
-        this.__retrieveHook = retrieveHook;
-        this.__updateHook = updateHook;
-        this.__insertHook = insertHook;
-        this.__deleteHook = deleteHook;
+        this.#retrieveHook = retrieveHook;
+        this.#updateHook = updateHook;
+        this.#insertHook = insertHook;
+        this.#deleteHook = deleteHook;
 
-        this.__singleItemQuery = false; // By default use arrays
-        this.__batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
-
-        this.__includes = {};
-    };
-
-    _bulkOperation = (objects, action) => {
-        if (this.__singleItemQuery) {
-            return batchPromises(this.__batchSize, objects, action);
-        } else {
-            return action(objects);
-        }
-    }
-
-    getType = () => {
-        return this.__type;
-    };
-
-    _toArray = (data) => {
-        if (Array.isArray(data)) {
-            return data;
-        } else {
-            this.__singleItemQuery = true;
-            return [data];
-        }
-    };
-
-    retrieveAll = () => {
-        return executeHook("retrieve", this.__retrieveHook, null)
-            .then(this._toArray);
-    };
-
-    insertObjects = (objects) => {
-        return this._bulkOperation(objects, this._insertObjects);
-    };
-
-    updateObjects = (objects) => {
-        return this._bulkOperation(objects, this._updateObjects);
-    };
-
-    deleteObjects = (objects) => {
-        return this._bulkOperation(objects, this._deleteObjects);
-    };
-
-    _insertObjects = (data) => {
-        return Promise.resolve(true);
-        return executeHook("insert", this.__insertHook, data)
-            .then(this._toArray);
-    };
-
-    _updateObjects = (data) => {
-        return Promise.resolve(true);
-        return executeHook("update", this.__updateHook, data)
-            .then(this._toArray);
-    };
-
-    _deleteObjects = (data) => {
-        return Promise.resolve(true);
-        return executeHook("update", this.__deleteHook, data)
-            .then(this._toArray);
+        this.#singleItemQuery = false; // By default use arrays
+        this.#batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
     };
 
     getStore = () => {
-        return this.store;
+        return this.#store;
     };
 
-    addRelationByField = (model, localField, remoteField="id") => {
-        const filterFunction = (parentObject, child) => {
-            return parentObject[localField] === child[remoteField];
-        };
-
-        return this.addRelationByFilter(model, filterFunction);
-    };
-
-    addRelationByFilter = (model, filterFunction) => {
-        const includedType = model.getType();
-
-        this.__includes[includedType] = filterFunction;
+    setStore = (store) => {
+        if (!this.#store) {
+            this.#store = store;
+        } else {
+            throw new Error("This model was already assigned to a store.");
+        }
     };
 
     addRelation = (model, param2, param3) => {
@@ -103,11 +51,11 @@ export default class Model {
             this.getStore().validateModel(model);
 
             if (typeof(param2) === "string" && (!param3 || typeof(param3) === "string")) { // explicit model, from, to
-                return this.addRelationByField(model, param2, param3);
+                return this.#addRelationByField(model, param2, param3);
             } else if (!param3 && typeof(param2) === "function") { // explicit model, filterFunction
-                return this.addRelationByFilter(model, param2);
+                return this.#addRelationByFilter(model, param2);
             } else if (!param2 && !param3) { // implicit model, from, to (it uses the type as local key and the id as remote key)
-                return this.addRelationByField(model, model.getType(), "id");
+                return this.#addRelationByField(model, model.getType(), "id");
             } else {
                 throw new Error("Invalid relation declaration");
             }
@@ -119,7 +67,7 @@ export default class Model {
     };
 
     getRelation = (parentObject, includedType, filterFunction) => {
-        const filterRelation = this.__includes[includedType];
+        const filterRelation = this.#includes[includedType];
 
         if (filterRelation) {
             return this.getStore()
@@ -134,6 +82,73 @@ export default class Model {
         } else {
             return Promise.reject("The relation doesn't exist");
         }
+    };
+
+    getType = () => {
+        return this.#type;
+    };
+
+    retrieveAll = () => {
+        return executeHook("retrieve", this.#retrieveHook, null, this.getStore().axios)
+            .then(this.#toArray);
+    };
+
+    insertObjects = (objects) => {
+        return objects.length ? this.#bulkOperation(objects, this.#insertObjects) : Promise.resolve();
+    };
+
+    updateObjects = (objects) => {
+        return objects.length ? this.#bulkOperation(objects, this.#updateObjects) : Promise.resolve();
+    };
+
+    deleteObjects = (objects) => {
+        return objects.length ? this.#bulkOperation(objects, this.#deleteObjects) : Promise.resolve();
+    };
+
+    #addRelationByField = (model, localField, remoteField="id") => {
+        const filterFunction = (parentObject, child) => {
+            return parentObject[localField] === child[remoteField];
+        };
+
+        return this.#addRelationByFilter(model, filterFunction);
+    };
+
+    #addRelationByFilter = (model, filterFunction) => {
+        const includedType = model.getType();
+
+        this.#includes[includedType] = filterFunction;
+    };
+
+    #bulkOperation = (objects, action) => {
+        if (this.#singleItemQuery) {
+            return batchPromises(this.#batchSize, objects, action);
+        } else {
+            return action(objects);
+        }
+    };
+
+    #toArray = (data) => {
+        if (Array.isArray(data)) {
+            return data;
+        } else {
+            this.#singleItemQuery = true;
+            return [data];
+        }
+    };
+
+    #insertObjects = (data) => {
+        return executeHook("insert", this.#insertHook, data, this.getStore().axios)
+            .then(this.#toArray);
+    };
+
+    #updateObjects = (data) => {
+        return executeHook("update", this.#updateHook, data, this.getStore().axios)
+            .then(this.#toArray);
+    };
+
+    #deleteObjects = (data) => {
+        return executeHook("delete", this.#deleteHook, data, this.getStore().axios)
+            .then(this.#toArray);
     };
 
 }

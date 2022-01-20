@@ -1,76 +1,102 @@
 import Store from "./Store";
+import axios from "axios";
 
 export default class PersistentStore extends Store{
     constructor(options) {
         super(options);
+        this.axios = options.axios || axios;
+        this._busy = false;
+        this._delayedSaveTimer = null;
 
         if (typeof(this.options.autoSave) === "number") {
-            setInterval(this.delayedSave, this.options.autoSave);
+            setInterval(() => {
+                if (!this._busy) {
+                    this.delayedSave();
+                }
+            }, this.options.autoSave);
         }
     };
 
-    _saveType = (type) => {
-        return this._getSets(type)
-            .then(({inserted, updated, deleted}) => {
+    addModel(model) {
+        this._busy = true;
 
-                return this.models[type].model.insertObjects(inserted)
-                    .then(() => this.models[type].model.updateObjects(updated))
-                    .then(() => this.models[type].model.deleteObjects(deleted))
-                    .then(() => {
-                        for (let object of deleted) {
-                            delete this.models[type].storedObjects[object.id];
-                        }
-
-                        for (let object of updated.concat(inserted)) {
-                            this.models[type].storedObjects[object.id].fingerprint = object.object.getFingerprint();
-                            this.models[type].storedObjects[object.id].status = "old";
-                        }
-                    });
+        super.addModel(model)
+            .then(() => {
+                this._busy = false;
             });
     };
-
-
-    _getSets = (type) => {
-        return this._getPromise(type)
-            .then(() => {
-                const objects = Object.values(this.models[type].storedObjects);
-
-                const newObjects = objects.filter(object => object.status === "new");
-
-                const edited = objects.filter(object => {
-                    return object.status === "old" && object.fingerprint !== object.object.getFingerprint();
-                });
-
-                const deleted = objects.filter(object => object.status === "deleted");
-
-                return {
-                    inserted: newObjects,
-                    updated: edited,
-                    deleted: deleted
-                }
-            });
-    }
 
     save = () => {
-        return Promise.all(Object.keys(this.models).map(this._saveType));
+        this._busy = true;
+        this.pubSub.publish("save", "start");
+
+        return Promise.all(Object.keys(this.models).map(this._saveByType))
+            .then(data => {
+                this._busy = false;
+                this.pubSub.publish("save", "end");
+
+                return data;
+            })
+            .catch(error => {
+                this._busy = false;
+                this.pubSub.publish("save", "end");
+                this.pubSub.publish("error", error);
+                return Promise.reject(error);
+            });
     };
 
+    insert(type, objects) {
+        return super.insert(type, objects)
+            .then(data => {
+                this.delayedSave();
+
+                return data;
+            });
+    };
+
+    delete(typeOrObjects, filterFunction) {
+        return super.delete(typeOrObjects, filterFunction)
+            .then(data => {
+                this.delayedSave();
+
+                return data;
+            });
+    };
+
+    update(objects) {
+        return super.update(objects)
+            .then(data => {
+                this.delayedSave();
+
+                return data;
+            });
+    };
+
+    _saveByType = (type) => {
+        return this.getDiff(type)
+            .then(({inserted, updated, deleted}) => {
+
+                const model = this.models[type].model;
+
+                // Operations order:
+                // 1) insert
+                // 2) update
+                // 3) delete
+                return model.insertObjects(inserted)
+                    .then(() => this.applyDiff({inserted}, type))
+                    .then(() => model.updateObjects(updated))
+                    .then(() => this.applyDiff({updated}, type))
+                    .then(() => model.deleteObjects(deleted))
+                    .then(() => this.applyDiff({deleted}, type));
+            });
+    };
+    
     delayedSave = () => {
         if (this.options.autoSave) {
-            if (this.__delayedSaveTimer) {
-                clearTimeout(this.__delayedSaveTimer);
+            if (this._delayedSaveTimer) {
+                clearTimeout(this._delayedSaveTimer);
             }
-            this.__delayedSaveTimer = setTimeout(this.save, this.options.saveDelay);
-        }
-
-        return Promise.resolve();
-    };
-
-
-    trigger = (event, objects) => {
-        if (["insert", "delete", "update"].includes(event)) {
-            this.delayedSave();
+            this._delayedSaveTimer = setTimeout(this.save, this.options.saveDelay);
         }
     };
-
 }

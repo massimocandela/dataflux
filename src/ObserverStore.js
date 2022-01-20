@@ -5,19 +5,19 @@ import PersistentStore from "./PersistentStore";
 class ObserverStore extends PersistentStore{
     constructor(options) {
         super(options);
-        this.__subscribed = {};
+        this._subscribed = {};
     };
 
     subscribe = (type, callback, filterFunction) => {
         const subKey = uuidv4();
-        if (!this.__subscribed[type]) {
-            this.__subscribed[type] = {};
+        if (!this._subscribed[type]) {
+            this._subscribed[type] = {};
         }
 
         this.find(type, filterFunction)
             .then(data => {
 
-                this._subscribeToObjects(type, data, {
+                this.#subscribeToObjects(type, data, {
                     callback,
                     filterFunction,
                     subKey
@@ -30,26 +30,46 @@ class ObserverStore extends PersistentStore{
     };
 
     unsubscribe = (key) => {
-        for (let type in this.__subscribed) {
-            for (let id in this.__subscribed[type]) {
-                this.__subscribed[type][id] = this.__subscribed[type][id]
+        for (let type in this._subscribed) {
+            for (let id in this._subscribed[type]) {
+                this._subscribed[type][id] = this._subscribed[type][id]
                     .filter(i => {
                         return i.subKey !== key
                     });
 
-                if (this.__subscribed[type][id].length === 0) {
-                    delete this.__subscribed[type][id];
+                if (this._subscribed[type][id].length === 0) {
+                    delete this._subscribed[type][id];
                 }
             }
         }
     };
 
-    _getUniqueSubs = (objects, type) => {
+    update(objects) {
+        return super.update(objects)
+            .then(this.#propagateChange);
+    };
+
+    insert(type, objects) {
+        objects = Array.isArray(objects) ? objects : [objects];
+        return super.insert(type, objects)
+            .then(objects => {
+                this.#propagateInsertChange(type, objects);
+
+                return objects;
+            });
+    };
+
+    delete(typeOrObjects, filterFunction) {
+        return super.delete(typeOrObjects, filterFunction)
+            .then(this.#propagateChange);
+    };
+
+    #getUniqueSubs = (objects, type) => {
         const out = {};
         for (let object of objects) {
             const objectId = object.getId();
 
-            const typeChannel = this.__subscribed[type] || {};
+            const typeChannel = this._subscribed[type] || {};
             const subscribedToObject = typeChannel[objectId] || [];
 
             for (let sub of subscribedToObject) {
@@ -60,87 +80,75 @@ class ObserverStore extends PersistentStore{
         return Object.values(out);
     }
 
-    _propagateChange = (objects=[]) => {
+    #propagateChange = (objects=[]) => {
         if (objects.length) {
             const type = objects[0].getModel().getType();
-            const uniqueSubs = this._getUniqueSubs(objects, type);
+            const uniqueSubs = this.#getUniqueSubs(objects, type);
 
             batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
                 return this.find(type, filterFunction).then(callback)
             });
         }
+
+        return objects;
     };
 
-
-    _subscribeToObjects = (type, objectsToSubscribe, item) => {
+    #subscribeToObjects = (type, objectsToSubscribe, item) => {
 
         for (let object of objectsToSubscribe) {
             const id = object.getId();
-            if (!this.__subscribed[type][id]) {
-                this.__subscribed[type][id] = [];
+            if (!this._subscribed[type][id]) {
+                this._subscribed[type][id] = [];
             }
 
-            this.__subscribed[type][id].push(item);
+            this._subscribed[type][id].push(item);
         }
 
-    }
-
-    _propagateInsertChange = (type, newObjects) => {
-        const uniqueSubs = {};
-        const objects = Object.values(this.__subscribed[type]);
-
-        for (let object of objects) {
-            for (let sub of object) {
-                if (!uniqueSubs[sub.subKey]) {
-                    uniqueSubs[sub.subKey] = sub;
-                }
-            }
-        }
-
-        const possibleSubs = Object.values(uniqueSubs);
-
-        batchPromises(10, possibleSubs, ({callback, filterFunction}) => {
-
-            const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
-
-            if (objectsToSubscribe.length) { // Check if the new objects matter
-
-                return this.find(type, filterFunction)
-                    .then(data => {
-                        let subKey;
-                        for (let d of data) {
-                            const item = this.__subscribed[d.getModel().getType()][d.getId()];
-                            subKey = item ? item.subKey : null
-                            if (subKey) break;
-                        }
-
-                        this._subscribeToObjects(type, objectsToSubscribe, {
-                            callback,
-                            filterFunction,
-                            subKey
-                        });
-
-                        return data;
-                    })
-                    .then(callback);
-            }
-        });
     };
 
-    trigger = (event, objects) => {
-        switch (event) {
-            case "insert":
-                if (objects[0]) this._propagateInsertChange(objects[0].getModel().getType(), objects);
-                break;
-            case "update":
-                this._propagateChange(objects);
-                break;
-            case "delete":
-                this._propagateChange(objects);
-                break;
-        }
+    #propagateInsertChange (type, newObjects) {
+        if (this._subscribed[type]) {
+            const uniqueSubs = {};
+            const objects = Object.values(this._subscribed[type]);
 
-        this.delayedSave();
+            for (let object of objects) {
+                for (let sub of object) {
+                    if (!uniqueSubs[sub.subKey]) {
+                        uniqueSubs[sub.subKey] = sub;
+                    }
+                }
+            }
+
+            const possibleSubs = Object.values(uniqueSubs);
+
+            batchPromises(10, possibleSubs, ({callback, filterFunction}) => {
+
+                const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
+
+                if (objectsToSubscribe.length) { // Check if the new objects matter
+
+                    return this.find(type, filterFunction)
+                        .then(data => {
+                            let subKey;
+                            for (let d of data) {
+                                const item = this._subscribed[d.getModel().getType()][d.getId()];
+                                subKey = item ? item.subKey : null
+                                if (subKey) break;
+                            }
+
+                            this.#subscribeToObjects(type, objectsToSubscribe, {
+                                callback,
+                                filterFunction,
+                                subKey
+                            });
+
+                            return data;
+                        })
+                        .then(callback);
+                }
+            });
+
+        }
     };
 
 }
