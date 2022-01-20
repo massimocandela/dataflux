@@ -92,7 +92,7 @@
   "dependencies": {
     "axios": "^0.25.0",
     "batch-promises": "^0.0.3",
-    "crc": "^4.1.0",
+    "crc-32": "^1.2.0",
     "uuid": "^8.3.2"
   },
   "resolutions": {}
