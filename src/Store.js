@@ -62,6 +62,7 @@ export default class Store {
     };
 
     insert (type, objects) {
+
         return this.#getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, true)));
     };
@@ -85,6 +86,11 @@ export default class Store {
                     .map(i => i.object);
 
                 return filterFunction ? all.filter(filterFunction) : all;
+            })
+            .catch(error => {
+                this.pubSub.publish("error", error);
+
+                return Promise.reject(error);
             });
     };
 
@@ -139,6 +145,7 @@ export default class Store {
     };
 
     #deleteByFilter (type, filterFunction) {
+
         return this.#getPromise(type)
             .then(() => {
                 const deleted = Object.values(this.models[type].storedObjects)
@@ -186,11 +193,13 @@ export default class Store {
     #loadObjects (type) {
         const item = this.models[type];
 
+        this.pubSub.publish("loading", {status: "start", model: type});
         return item.promise = item.model.retrieveAll()
             .then(items => {
                 for (let item of items) {
                     this.#insertObject(type, item, false);
                 }
+                this.pubSub.publish("loading", {status: "end", model: type});
             });
     };
 

@@ -20,10 +20,12 @@ export default class ReactStore extends ObserverStore {
     };
 
     findAll(type, stateAttribute, context, filterFunction) {
+        this.#fixState(stateAttribute, context);
+
         const subKey = this.subscribe(type, data => {
             context.setState({
                 ...context.state,
-                [stateAttribute]: data
+                [stateAttribute]: data || []
             });
         }, filterFunction);
 
@@ -31,6 +33,8 @@ export default class ReactStore extends ObserverStore {
     };
 
     findOne(type, stateAttribute, context, filterFunction) {
+        this.#fixState(stateAttribute, context);
+
         const subKey = this.subscribe(type, data => {
             context.setState({
                 ...context.state,
@@ -40,6 +44,12 @@ export default class ReactStore extends ObserverStore {
 
         addSubscriptionToContext(context, subKey);
     };
+
+    #fixState (stateAttribute, context) {
+        if (!context[stateAttribute]) {
+            context[stateAttribute] = []; // side effect on state
+        }
+    }
 
     handleChange = (object, name) => {
 
