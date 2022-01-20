@@ -284,6 +284,17 @@ const options = {
 const book = new Model("book", options);
 ```
 
+All the possible options for a model creation are:
+
+| Name     | Description                                                                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| retrieve | Describes the operation to retrieve a collection of objects from a REST API. It can be an object containing `method` and `url` or a function. See examples above. |
+| insert   | Describes the operation to insert a new object in the collection. It can be an object containing `method` and `url` or a function. See examples above.            |
+| update   | Describes the operation to update objects of the collection. It can be an object containing `method` and `url` or a function. See examples above.                 |
+| delete   | Describes the operation to remove objects from the collection. It can be an object containing `method` and `url` or a function. See examples above.               |
+| axios    | It allows to specify an axios instance to be used for the queries. If not specified, a new one will be used.                                                      |
+
+
 ### Model relations
 
 Optionally, you can create relations among models.

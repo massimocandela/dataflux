@@ -1,4 +1,4 @@
-import crc32 from 'crc/crc32';
+const CRC32 = require('crc-32');
 
 const _getFingerprint = (object) => {
 
@@ -30,5 +30,5 @@ const getObjectFingerprint = (value) => {
 };
 
 export default function fingerprint(object) {
-    return crc32(_getFingerprint(object)).toString(16);
+    return CRC32.str(_getFingerprint(object)).toString(16);
 }

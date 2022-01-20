@@ -1,5 +1,6 @@
 import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUtils";
 import batchPromises from "batch-promises";
+import axios from "axios";
 
 export default class Model {
     #type;
@@ -11,11 +12,13 @@ export default class Model {
     #deleteHook;
     #singleItemQuery;
     #batchSize;
+    #axios
     
-    constructor(name, options) {
+    constructor(name, options={}) {
         this.#type = name;
         this.#store = null;
         this.#includes = {};
+        this.#axios = options.axios || axios
 
         if (!name || !options) {
             throw new Error("A Model requires at least a name and a hook");
@@ -89,7 +92,7 @@ export default class Model {
     };
 
     retrieveAll = () => {
-        return executeHook("retrieve", this.#retrieveHook, null, this.getStore().axios)
+        return executeHook("retrieve", this.#retrieveHook, null, this.#axios)
             .then(this.#toArray);
     };
 
@@ -137,17 +140,17 @@ export default class Model {
     };
 
     #insertObjects = (data) => {
-        return executeHook("insert", this.#insertHook, data, this.getStore().axios)
+        return executeHook("insert", this.#insertHook, data, this.#axios)
             .then(this.#toArray);
     };
 
     #updateObjects = (data) => {
-        return executeHook("update", this.#updateHook, data, this.getStore().axios)
+        return executeHook("update", this.#updateHook, data, this.#axios)
             .then(this.#toArray);
     };
 
     #deleteObjects = (data) => {
-        return executeHook("delete", this.#deleteHook, data, this.getStore().axios)
+        return executeHook("delete", this.#deleteHook, data, this.#axios)
             .then(this.#toArray);
     };
 

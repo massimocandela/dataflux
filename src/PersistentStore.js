@@ -1,10 +1,8 @@
 import Store from "./Store";
-import axios from "axios";
 
 export default class PersistentStore extends Store{
     constructor(options) {
         super(options);
-        this.axios = options.axios || axios;
         this._busy = false;
         this._delayedSaveTimer = null;
 
