@@ -13,13 +13,22 @@ DataFlux is a JavaScript library that automatically interfaces with your REST AP
 
 ## Installation
 
+Using npm:
 ```sh
 npm install dataflux
 ```
 
+Using jsDelivr CDN:
+```html
+<script src="https://cdn.jsdelivr.net/npm/dataflux/dist/index.js"></script>
+```
+
 ## Examples
 
-Consider the following store/model declaration common to all the examples below:
+Create your global store by creating a file (e.g., named `store.js`) containing the model declaration.
+
+Consider the following hypothetical store/model declaration common to all the examples below:
+
 ```js
 import {Store, Model} from "dataflux";
 
@@ -30,11 +39,14 @@ const book = new Model("book", `https://rest.example.net/api/v1/books`);
 store.addModel(author);
 store.addModel(book);
 
-author.addRelation(book, "id", "authorId"); // Add an object relation between author.id and book.authorId
+// An object relation between author.id and book.authorId as follows
+author.addRelation(book, "id", "authorId");
+
+export default store;
 ```
 
 
-The store can be initialized with [various options](#configuration).
+The store can be initialized with [various options](#configuration). You need only one store for the entire application, that's why you should declare it in its own file and import it in multiple places.
 
 The creation of a model requires at least a name and an url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
 
@@ -46,6 +58,8 @@ A JS object is automatically created for each item returned by the API, for each
 Retrieve and edit an author not knowing the ID:
 
 ```js
+import store from "./store";
+
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
         .then(([author]) => {
@@ -180,7 +194,7 @@ class MyComponent extends React.Component {
 }
 ```
 
-The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the research, the first is returned).
+The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the search, the first is returned).
 
 When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll` injects the unsubscribe call inside `componentWillUnmount`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe` and `store.unsubscribe` instead of `store.findAll`, to avoid side effects when the component is unmounted.
 
