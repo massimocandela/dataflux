@@ -48,7 +48,7 @@ export default store;
 
 The store can be initialized with [various options](#configuration). You need only one store for the entire application, that's why you should declare it in its own file and import it in multiple places.
 
-The creation of a model requires at least a name and an url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
+The creation of a model requires at least a name and a url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
 
 A JS object is automatically created for each item returned by the API, for each model. The object has the same properties of the JSON item plus some high-level method (see [objects methods](#objects-methods)).
 **All the objects are indexed in the store.**
@@ -219,39 +219,77 @@ A model can be simply created with:
 const book = new Model("book", `https://rest.example.net/api/v1/books`);
 ```
 
-However, in many cases more complex APIs require different settings for the various operations.
+However, sometimes you may want to define a more complex interaction with the API. In such cases you can pass options to perform more elaborated model's initializations.
 
-Instead of an url, you can pass options to perform more elaborated Model's initializations.
+```js
+const book = new Model("book", options);
+```
+
+All the possible options for a model creation are (they are all optional):
+
+| Name     | Description                                                                                                                                                                                                                                                                                                                                                                     | Default              |
+|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
+| retrieve | Describes the operation to retrieve the collection of objects from the REST API. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                    | `{method: "get"}`    |
+| insert   | Describes the operation to insert a new object in the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                   | `{method: "post"}`   |
+| update   | Describes the operation to update objects of the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                        | `{method: "put"}`    |
+| delete   | Describes the operation to remove objects from the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                      | `{method: "delete"}` |
+| fields   | An array of strings defining which attributes the retrieved objects should have. Essentially, it allows you to specify the [X-Fields header](https://flask-restplus.readthedocs.io/en/stable/mask.html). This reduces transfer size and memory usage. E.g., if you have a collection of books, of which you are interested only in the name, you can define `fields: ["name"]`. | All the fields       |
+| headers  | A dictionary of headers for the HTTP request. E.g., `{"Authorization": "bearer XXXX"}`.                                                                                                                                                                                                                                                                                         | No headers           |
+| axios    | It allows to specify an axios instance to be used for the queries. If not specified, a new one will be used.                                                                                                                                                                                                                                                                    | A new axios instance |
+
+
+### Operations
+As described in the table above, there are four possible operations: **retrieve, insert, update,** and **delete**. An operation can be defined as an operation object or a function.
+
+#### Operation object
+
+An operation object is an object like follows:
+
+```json
+{
+  "method": "get",
+  "url": "https://api.example.com",
+  "headers": {"Authorization": "bearer XXXX"}
+}
+```
+
+Usage example:
 
 ```js
 const options = {
+    
   retrieve: {
     method: "get",
-    url: "https://rest.example.net/api/v1/books"
+    url: "https://rest.example.net/api/v1/books",
+    headers: {} // Headers can be define per operation or globally
   },
+  
   insert: {
     method: "post",
     url: "https://rest.example.net/api/v1/books"
   },
+  
   update: {
     method: "put",
     url: "https://rest.example.net/api/v1/books"
   },
+  
   delete: {
     method: "delete",
     url: "https://rest.example.net/api/v1/books"
-  }
+  },
+  
+  headers: {"Authorization": "bearer XXXX"} // Globally defined headers
 };
 
 const book = new Model("book", options);
 ```
-You don't necessarily need to specify a url for each operation. If a url is not specified for an operation, the url defined for the `GET` operation is used.
+You don't need to specify all the attributes for each operation, only the ones you want to variate from the defaults (see table above). If a url is not specified for an operation, the url defined for the `GET` operation is used.
 
-For example, if you want to perform both inserts and updates with `PUT`, you can do:
+For example, if you are ok with the default behaviour except you want to perform both inserts and updates with `PUT` (instead of post/put), you can do:
 ```js
 const options = {
   retrieve: {
-    method: "get",
     url: "https://rest.example.net/api/v1/books"
   },
   insert: {
@@ -262,7 +300,9 @@ const options = {
 const book = new Model("book", options);
 ```
 
-Or, even more flexible, you can pass functions and handle yourself the operations. The functions MUST return promises.
+#### Operation function
+
+To be even more flexible, you can pass functions and handle yourself the operations. An operation function must return a promise, returning an array of JSON objects when these are ready.
 
 
 ```js
@@ -284,15 +324,7 @@ const options = {
 const book = new Model("book", options);
 ```
 
-All the possible options for a model creation are:
 
-| Name     | Description                                                                                                                                                       |
-|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| retrieve | Describes the operation to retrieve a collection of objects from a REST API. It can be an object containing `method` and `url` or a function. See examples above. |
-| insert   | Describes the operation to insert a new object in the collection. It can be an object containing `method` and `url` or a function. See examples above.            |
-| update   | Describes the operation to update objects of the collection. It can be an object containing `method` and `url` or a function. See examples above.                 |
-| delete   | Describes the operation to remove objects from the collection. It can be an object containing `method` and `url` or a function. See examples above.               |
-| axios    | It allows to specify an axios instance to be used for the queries. If not specified, a new one will be used.                                                      |
 
 
 ### Model relations

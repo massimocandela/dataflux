@@ -1,15 +1,29 @@
 
-const getDataStringHook = (url, method="get", data=null, axios) => {
-    return axios({
-        url,
-        method,
+const getDataStringHook = (hook, data=null, axios) => {
+    const options = {
+        url: hook.url,
+        method: hook.method || "get",
         data,
         reponseType: 'json'
-    })
+    };
+
+    if (hook.headers) {
+        options.headers = hook.headers;
+    }
+
+    if (hook.fields) {
+        options.headers = options.headers || {};
+        options.headers['X-Fields'] = hook.fields;
+
+    }
+
+    console.log(hook);
+
+    return axios(options)
         .then(data => data.data);
 };
 
-const createHookItem = (optionItem, defaultMethod, defaultUrl) => {
+const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
     switch(typeof(optionItem)) {
         case "undefined":
             if (!defaultUrl) {
@@ -27,7 +41,9 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl) => {
         case "object":
             return {
                 method: optionItem.method || defaultMethod,
-                url: optionItem.url || defaultUrl
+                url: optionItem.url || defaultUrl,
+                fields: options.fields || [],
+                headers: optionItem.headers || options.headers || {}
             };
         default:
             throw new Error(`Invalid ${defaultMethod} configuration`);
@@ -38,10 +54,10 @@ export const getHooksFromOptions = (options) => {
     const defaultUrl = typeof(options.retrieve) === "function" ? null : options.retrieve.url;
 
     return [
-        createHookItem(options.retrieve, "get", defaultUrl),
-        createHookItem(options.insert, "post", defaultUrl),
-        createHookItem(options.update, "put", defaultUrl),
-        createHookItem(options.delete, "delete", defaultUrl)
+        createHookItem(options.retrieve, "get", defaultUrl, options),
+        createHookItem(options.insert, "post", defaultUrl, options),
+        createHookItem(options.update, "put", defaultUrl, options),
+        createHookItem(options.delete, "delete", defaultUrl, options)
     ];
 };
 
@@ -73,7 +89,7 @@ export const executeHook = (type, hook, data, axios) => {
 
     switch(hookType) {
         case "object" :
-            return getDataStringHook(hook.url, hook.method, data, axios);
+            return getDataStringHook(hook, data, axios);
         case "function":
             return hook(data);
         default:
