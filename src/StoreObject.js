@@ -25,13 +25,16 @@ export default class Obj {
         if (this.#loaded) {
             return Promise.resolve(this);
         } else {
-            return this.getModel()
+            const model = this.getModel();
+
+            return model
                 .load(this)
                 .then(() => {
                     this.#loaded = true;
 
-                    return this;
-                });
+                    return model.getStore().update([this]); // Propagate update
+                })
+                .then(() => this); // return always this
         }
     };
 

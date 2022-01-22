@@ -2,6 +2,18 @@ import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUti
 import batchPromises from "batch-promises";
 import axios from "axios";
 
+const applyData = (obj, data) => {
+    for (let att in data) {
+        if (att !== "id" || obj.id === undefined || (att === "id" && obj.id === data.id)) {
+            obj[att] = data[att];
+        } else {
+            return Promise.reject("The loading function cannot change the id of the object.")
+        }
+    }
+
+    return Promise.resolve(obj);
+};
+
 export default class Model {
     #type;
     #store;
@@ -55,35 +67,24 @@ export default class Model {
     };
 
     load = (obj) => {
-        return new Promise((resolve, reject) => {
-            const applyData = (data) => {
-                for (let att in data) {
-                    if (att !== "id" || obj.id === undefined || (att === "id" && obj.id === data.id)) {
-                        obj[att] = data[att];
-                    } else {
-                        return Promise.reject("The loading function cannot change the id of the object.")
-                    }
-                }
-            };
 
-            if (this.#loadFunction) {
-                const res = this.#loadFunction(obj.toJSON());
-                if (typeof(res) === "string") {
-                    this.#axios({
-                        method: "get",
-                        url: res,
-                        responseType: "json"
-                    })
-                        .then(data => applyData(data.data))
-                        .then(resolve);
-                } else {
-                    res.then(applyData)
-                        .then(resolve);
-                }
+        if (this.#loadFunction) {
+            const res = this.#loadFunction(obj.toJSON());
+
+            if (typeof(res) === "string") {
+                return this.#axios({
+                    method: "get",
+                    url: res,
+                    responseType: "json"
+                })
+                    .then(data => applyData(obj, data.data));
             } else {
-                reject("You must define a loading function in the model to enable load().");
+                return res
+                    .then(data => applyData(obj, data));
             }
-        });
+        } else {
+            return Promise.reject("You must define a loading function in the model to enable load().");
+        }
     };
 
     addRelation = (model, param2, param3) => {
