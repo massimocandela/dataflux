@@ -36,7 +36,7 @@ export default class Obj {
     };
 
     getFingerprint = () => {
-        return fingerprint(this.toJson());
+        return fingerprint(this.toJSON());
     };
 
     get = (attribute) => {
@@ -63,7 +63,7 @@ export default class Obj {
         return this.getModel().getStore().delete([this]);
     };
 
-    toJson = () => {
+    toJSON = () => {
         const attrs = Object.keys(this);
         const out = {};
 
@@ -77,6 +77,6 @@ export default class Obj {
     };
 
     toString = () => {
-        return JSON.stringify(this.toJson());
+        return JSON.stringify(this.toJSON());
     };
 }
