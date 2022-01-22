@@ -67,7 +67,7 @@ export default class Model {
             };
 
             if (this.#loadFunction) {
-                const res = this.#loadFunction(obj.toJson());
+                const res = this.#loadFunction(obj.toJSON());
                 if (typeof(res) === "string") {
                     this.#axios({
                         method: "get",
