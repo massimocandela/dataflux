@@ -6,7 +6,7 @@
   "bin": "dist/index.js",
   "scripts": {
     "babel": "node_modules/.bin/babel",
-    "test": "./node_modules/.bin/mocha tests --require @babel/register",
+    "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register",
     "compile": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist",
     "release": "dotenv release-it"
   },
@@ -86,7 +86,10 @@
     "@babel/plugin-transform-runtime": "^7.16.10",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
+    "chai": "^4.3.4",
+    "chai-subset": "^1.6.0",
     "dotenv-cli": "^4.1.1",
+    "mocha": "^9.1.4",
     "release-it": "^14.12.3"
   },
   "dependencies": {
