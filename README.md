@@ -227,15 +227,16 @@ const book = new Model("book", options);
 
 All the possible options for a model creation are (they are all optional):
 
-| Name     | Description                                                                                                                                                                                                                                                                                                                                                                     | Default              |
-|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
-| retrieve | Describes the operation to retrieve the collection of objects from the REST API. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                    | `{method: "get"}`    |
-| insert   | Describes the operation to insert a new object in the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                   | `{method: "post"}`   |
-| update   | Describes the operation to update objects of the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                        | `{method: "put"}`    |
-| delete   | Describes the operation to remove objects from the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                      | `{method: "delete"}` |
-| fields   | An array of strings defining which attributes the retrieved objects should have. Essentially, it allows you to specify the [X-Fields header](https://flask-restplus.readthedocs.io/en/stable/mask.html). This reduces transfer size and memory usage. E.g., if you have a collection of books, of which you are interested only in the name, you can define `fields: ["name"]`. | All the fields       |
-| headers  | A dictionary of headers for the HTTP request. E.g., `{"Authorization": "bearer XXXX"}`.                                                                                                                                                                                                                                                                                         | No headers           |
-| axios    | It allows to specify an axios instance to be used for the queries. If not specified, a new one will be used.                                                                                                                                                                                                                                                                    | A new axios instance |
+| Name     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Default              |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
+| retrieve | Describes the operation to retrieve the collection of objects from the REST API. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                                                                                                                                                                                                  | `{method: "get"}`    |
+| insert   | Describes the operation to insert a new object in the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                                                                                                                                                                                                                 | `{method: "post"}`   |
+| update   | Describes the operation to update objects of the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                                                                                                                                                                                                                      | `{method: "put"}`    |
+| delete   | Describes the operation to remove objects from the collection. It can be an operation object or a function. See [operations](#operations).                                                                                                                                                                                                                                                                                                                                                                                                                                    | `{method: "delete"}` |
+| fields   | An array of strings defining which attributes the retrieved objects should have. Essentially, it allows you to contemporarily specify the [X-Fields header](https://flask-restplus.readthedocs.io/en/stable/mask.html) and the [fields GET parameter](https://developers.google.com/slides/api/guides/performance#partial). This reduces transfer size and memory usage. E.g., if you have a collection of books, of which you are interested only in the name, you can define `fields: ["name"]`. In combination with `load` it allows for partial lazy load of the objects. | All the fields       |
+| headers  | A dictionary of headers for the HTTP request. E.g., `{"Authorization": "bearer XXXX"}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | No headers           |
+| load     | A function that allows to enrich the objects on demand. E.g., you can use `fields` to download only the titles of a collection of books, and `load` to load completely the object. See [object enrichment](#object-enrichment).                                                                                                                                                                                                                                                                                                                                               |
+| axios    | It allows to specify an axios instance to be used for the queries. If not specified, a new one will be used.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | A new axios instance |
 
 
 ### Operations
@@ -257,28 +258,28 @@ Usage example:
 
 ```js
 const options = {
-    
+
   retrieve: {
     method: "get",
     url: "https://rest.example.net/api/v1/books",
     headers: {} // Headers can be define per operation or globally
   },
-  
+
   insert: {
     method: "post",
     url: "https://rest.example.net/api/v1/books"
   },
-  
+
   update: {
     method: "put",
     url: "https://rest.example.net/api/v1/books"
   },
-  
+
   delete: {
     method: "delete",
     url: "https://rest.example.net/api/v1/books"
   },
-  
+
   headers: {"Authorization": "bearer XXXX"} // Globally defined headers
 };
 
@@ -302,7 +303,7 @@ const book = new Model("book", options);
 
 #### Operation function
 
-To be even more flexible, you can pass functions and handle yourself the operations. An operation function must return a promise, returning an array of JSON objects when these are ready.
+To be even more flexible, you can pass functions and handle yourself the operations. An operation function must return a promise, the promise must return an array of JSON objects when these are ready.
 
 
 ```js
@@ -316,7 +317,7 @@ const options = {
   insert: (data) => {
     // 1) recieve the data from the store
     // 2) transform the data however you like 
-    // 3) send data to server
+    // 3) send data to server and resolve empty
     return Promise.resolve();
   }
 };
@@ -324,8 +325,49 @@ const options = {
 const book = new Model("book", options);
 ```
 
+#### Object enrichment
+
+DataFlux objects can have a `load()` method which enables you to load extra attributes of an object.
+
+Example of usage of `load()`:
+
+```js
+console.log(book);
+// {title: "The little prince"}
+
+book.load();
+// The book object will be updated and it will contain
+// {id: 23, title: "The little prince", price: 9.99, year: 1943}
+//
+// If you are using React, book.load() will automatically update your state
+```
 
 
+
+To enable such a method, you have to define the `load` option during model creation. The load option accepts a function that returns the complete object of a url. The function receives in input the current JSON object.
+
+Example of creation of a model with `load` support:
+```js
+const book = new Model("book", {
+  retrieve: {
+    url: "https://rest.example.net/api/v1/books/"
+  },
+  fields: ["title"], // By default the books will contain only the title
+  load: (object) => { // "object" contains the current object to be enriched
+
+    // Return the url where to retrieve the object
+    return "https://rest.example.net/api/v1/books/" + object.id;
+  }
+});
+```
+Alternatively, the `load` function can return directly the enriched object.
+```js
+const book = new Model("book", {
+  load: (object) => {
+    return axios({...}).then(raw => raw.data);
+  }
+});
+```
 
 ### Model relations
 
