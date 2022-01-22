@@ -13,15 +13,21 @@ export default class Model {
     #singleItemQuery;
     #batchSize;
     #axios
-    
+    #loadFunction;
+
     constructor(name, options={}) {
         this.#type = name;
         this.#store = null;
         this.#includes = {};
-        this.#axios = options.axios || axios
+        this.#axios = options.axios || axios;
+        this.#loadFunction = options.load || null;
 
         if (!name || !options) {
             throw new Error("A Model requires at least a name and a hook");
+        }
+
+        if (this.#loadFunction && typeof(this.#loadFunction) !== "function") {
+            throw new Error("The load option must be a function");
         }
 
         const [retrieveHook, insertHook, updateHook, deleteHook] = (typeof(options) === "object") ?
@@ -46,6 +52,38 @@ export default class Model {
         } else {
             throw new Error("This model was already assigned to a store.");
         }
+    };
+
+    load = (obj) => {
+        return new Promise((resolve, reject) => {
+            const applyData = (data) => {
+                for (let att in data) {
+                    if (att !== "id" || obj.id === undefined || (att === "id" && obj.id === data.id)) {
+                        obj[att] = data[att];
+                    } else {
+                        return Promise.reject("The loading function cannot change the id of the object.")
+                    }
+                }
+            };
+
+            if (this.#loadFunction) {
+                const res = this.#loadFunction(obj.toJson());
+                if (typeof(res) === "string") {
+                    this.#axios({
+                        method: "get",
+                        url: res,
+                        responseType: "json"
+                    })
+                        .then(data => applyData(data.data))
+                        .then(resolve);
+                } else {
+                    res.then(applyData)
+                        .then(resolve);
+                }
+            } else {
+                reject("You must define a loading function in the model to enable load().");
+            }
+        });
     };
 
     addRelation = (model, param2, param3) => {

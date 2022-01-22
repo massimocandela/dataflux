@@ -1,5 +1,7 @@
+import brembo from "brembo";
 
 const getDataStringHook = (hook, data=null, axios) => {
+
     const options = {
         url: hook.url,
         method: hook.method || "get",
@@ -12,16 +14,21 @@ const getDataStringHook = (hook, data=null, axios) => {
     }
 
     if (hook.fields) {
-        options.headers = options.headers || {};
-        options.headers['X-Fields'] = hook.fields;
-
+        setFields(options, hook);
     }
-
-    console.log(hook);
 
     return axios(options)
         .then(data => data.data);
 };
+
+const setFields = (options, hook) => {
+    options.headers = options.headers || {};
+    options.headers['X-Fields'] = hook.fields;
+
+    options.url = brembo.build(options.url, {
+        params: {fields: hook.fields.join(",")}
+    });
+}
 
 const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
     switch(typeof(optionItem)) {

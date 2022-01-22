@@ -22,6 +22,7 @@ export default class Store {
         if (typeof(type) !== "string" || type === "") {
             throw new Error("Not valid model object: type missing");
         }
+
     };
 
     addModel (model) {

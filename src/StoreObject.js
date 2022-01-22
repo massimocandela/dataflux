@@ -2,6 +2,7 @@ import fingerprint from "./fingerprint";
 import { v4 as uuidv4 } from "uuid";
 
 export default class Obj {
+    #loaded = false;
     constructor(values, model) {
         this.getModel = () => model;
         Object.keys(values)
@@ -17,7 +18,21 @@ export default class Obj {
             id = uuidv4();
         }
 
-        this.getId = () => id
+        this.getId = () => id;
+    };
+
+    load = () => {
+        if (this.#loaded) {
+            return Promise.resolve(this);
+        } else {
+            return this.getModel()
+                .load(this)
+                .then(() => {
+                    this.#loaded = true;
+
+                    return this;
+                });
+        }
     };
 
     getFingerprint = () => {
