@@ -163,9 +163,9 @@ export default class Model {
 
     #bulkOperation = (objects, action) => {
         if (this.#singleItemQuery) {
-            return batchPromises(this.#batchSize, objects, action);
+            return batchPromises(this.#batchSize, objects.map(i => i.toJSON()), action);
         } else {
-            return action(objects);
+            return action(objects.map(i => i.toJSON()));
         }
     };
 

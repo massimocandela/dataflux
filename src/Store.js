@@ -43,7 +43,9 @@ export default class Store {
                     resolve();
                 }
             } else {
-                reject("The model already exists");
+                const error = "The model already exists";
+                this.pubSub.publish("error", error);
+                reject(error);
             }
         });
     };

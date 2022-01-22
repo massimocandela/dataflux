@@ -18,7 +18,7 @@ export default class PersistentStore extends Store{
     addModel(model) {
         this._busy = true;
 
-        super.addModel(model)
+        return super.addModel(model)
             .then(() => {
                 this._busy = false;
             });
@@ -80,11 +80,11 @@ export default class PersistentStore extends Store{
                 // 1) insert
                 // 2) update
                 // 3) delete
-                return model.insertObjects(inserted)
+                return model.insertObjects(inserted.map(i => i.object))
                     .then(() => this.applyDiff({inserted}, type))
-                    .then(() => model.updateObjects(updated))
+                    .then(() => model.updateObjects(updated.map(i => i.object)))
                     .then(() => this.applyDiff({updated}, type))
-                    .then(() => model.deleteObjects(deleted))
+                    .then(() => model.deleteObjects(deleted.map(i => i.object)))
                     .then(() => this.applyDiff({deleted}, type));
             });
     };
