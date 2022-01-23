@@ -4,6 +4,12 @@ const fs = require("fs");
 const booksFile = "./tests/data/books.json";
 const authorsFile = "./tests/data/authors.json";
 
+const loadAnswer = (isbn, file) => {
+    const items = JSON.parse(fs.readFileSync(file, "utf-8"));
+
+    return Promise.resolve(items.filter(i => i.isbn === isbn)[0]);
+};
+
 const apiAnswer = (fields, file) => {
     const items = JSON.parse(fs.readFileSync(file, "utf-8"));
     const filtered = items.map(item => {
@@ -33,6 +39,7 @@ const createTestStore  = (options) => {
     const bookFields = ["isbn"];
     const book = new Model("book", {
         fields: bookFields,
+        load: (obj) => loadAnswer(obj.isbn, booksFile),
         retrieve: () => apiAnswer(bookFields, booksFile)
     });
 
@@ -40,10 +47,16 @@ const createTestStore  = (options) => {
         retrieve: () => apiAnswer(null, authorsFile)
     });
 
+    const author2 = new Model("author2", {
+        retrieve: () => apiAnswer(null, authorsFile)
+    });
+
     store.addModel(book);
     store.addModel(author);
+    store.addModel(author2);
 
     book.addRelation(author, "authorId");
+    book.addRelation(author2, ({authorId}, {id}) => id === authorId);
 
     return store;
 }

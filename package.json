@@ -6,7 +6,7 @@
   "bin": "dist/index.js",
   "scripts": {
     "babel": "node_modules/.bin/babel",
-    "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register",
+    "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register --exit",
     "compile": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist",
     "release": "dotenv release-it"
   },

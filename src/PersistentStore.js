@@ -61,10 +61,12 @@ export default class PersistentStore extends Store{
             });
     };
 
-    update(objects) {
+    update(objects, skipSave) {
         return super.update(objects)
             .then(data => {
-                this.delayedSave();
+                if (!skipSave){
+                    this.delayedSave();
+                }
 
                 return data;
             });

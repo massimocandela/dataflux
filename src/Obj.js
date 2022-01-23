@@ -32,7 +32,7 @@ export default class Obj {
                 .then(() => {
                     this.#loaded = true;
 
-                    return model.getStore().update([this]); // Propagate update
+                    return model.getStore().update([this], true); // Propagate update
                 })
                 .then(() => this); // return always this
         }
@@ -55,7 +55,7 @@ export default class Obj {
             throw new Error("You cannot change the ID");
         }
         this[attribute] = value;
-        this.getModel().getStore().update([this]);
+        return this.getModel().getStore().update([this]);
     };
 
     save = () => {

@@ -44,8 +44,8 @@ class ObserverStore extends PersistentStore{
         }
     };
 
-    update(objects) {
-        return super.update(objects)
+    update(objects, skipSave) {
+        return super.update(objects, skipSave)
             .then(this.#propagateChange);
     };
 
@@ -86,7 +86,7 @@ class ObserverStore extends PersistentStore{
             const uniqueSubs = this.#getUniqueSubs(objects, type);
 
             batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
-                return this.find(type, filterFunction).then(callback)
+                return this.find(type, filterFunction).then(callback);
             });
         }
 

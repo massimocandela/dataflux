@@ -1,4 +1,4 @@
-import Obj from "./StoreObject";
+import Obj from "./Obj";
 import PubSub from "./PubSub";
 
 export default class Store {
@@ -51,21 +51,25 @@ export default class Store {
     };
 
     update (objects) {
-        return Promise.resolve(); // Nothing to do at this level
+        return Promise.resolve(objects); // Nothing to do at this level
     };
 
     delete (typeOrObjects, filterFunction) {
         if (typeof(typeOrObjects) === "string" && typeof(filterFunction) === "function") {
-            return this.#deleteByFilter(typeOrObjects, filterFunction);
-        } else if (typeof(typeOrObjects) === "object" && typeOrObjects.length){
-            return Promise.all(typeOrObjects.map(this.#deleteByObject));
+            const type = typeOrObjects;
+            return this.#deleteByFilter(type, filterFunction);
+        } else if (Array.isArray(typeOrObjects) && typeOrObjects.length && !filterFunction) {
+            const objects = typeOrObjects;
+            return Promise.all(objects.map(this.#deleteByObject))
+                .then((data) => data.flat());
         } else {
-            return Promise.reject("Invalid delete request. You have to provide a list of objects or a type and a filter function");
+            const error = "Invalid delete request. You have to provide a list of objects or a type and a filter function";
+            this.pubSub.publish("error", error);
+            return Promise.reject(error);
         }
     };
 
     insert (type, objects) {
-
         return this.#getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, true)));
     };
@@ -141,10 +145,13 @@ export default class Store {
             });
     };
 
-    #deleteByObject (object) {
-        return this.#deleteByFilter(object.getType(), (item) => {
-            return object.getId() === item.getId();
-        });
+    #deleteByObject = (object) => {
+        const id = object.getId();
+        const filterFunction = (item) => {
+            return id === item.getId();
+        };
+
+        return this.#deleteByFilter(object.getModel().getType(), filterFunction);
     };
 
     #deleteByFilter (type, filterFunction) {
@@ -158,7 +165,7 @@ export default class Store {
                     object.status = "deleted";
                 }
 
-                return true;
+                return deleted.map(i => i.object);
             });
     };
 

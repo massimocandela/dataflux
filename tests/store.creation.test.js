@@ -1,18 +1,12 @@
 const chai = require("chai");
-const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
 const chaiSubset = require('chai-subset');
 const {Store, Model} = require("../src/index");
 chai.use(chaiSubset);
 const expect = chai.expect;
 
-const store = createTestStore({
-    autoSave: false,
-    lazyLoad: true
-});
-
 console.warn = () => {}; // Shut up
 
-describe("Store creation", function() {
+describe("Store and models creation", function() {
 
     it("duplicated model", function (done) {
         const store = new Store({

@@ -9,7 +9,7 @@ const store = createTestStore({
     lazyLoad: true
 });
 
-describe("Store find", function() {
+describe("Store find", function () {
 
     it("loading collection - no filter function", function (done) {
         store.find("book")
@@ -39,5 +39,67 @@ describe("Store find", function() {
             });
     });
 
+    it("object load enrichment", function (done) {
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+
+                first.load()
+                    .then(() => {
+                        const expected = {
+                            "isbn": "9781593279509",
+                            "title": "Eloquent JavaScript, Third Edition",
+                            "authorId": 0,
+                            "pages": 472
+                        };
+                        expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
+                        done();
+                    });
+            });
+    });
+
+    it("object load relation - no filter function", function (done) {
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+                first.getRelation("author")
+                    .then(authors => {
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
+                        done();
+                    })
+            });
+    });
+
+    it("object load relation - on id - filter function", function (done) {
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+                first.getRelation("author", ({name}) => name === "Marijn")
+                    .then(authors => {
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
+
+                        first.getRelation("author", ({name}) => name === "Dante")
+                            .then(authors => {
+                                expect(authors.length).to.equal(0);
+                                done();
+                            })
+                    })
+            });
+    });
+
+    it("object load relation - on function - no filter function", function (done) {
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+                first.getRelation("author2")
+                    .then(authors => {
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
+                        done();
+                    })
+            });
+    });
 
 });

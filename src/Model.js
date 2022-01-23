@@ -112,15 +112,14 @@ export default class Model {
         const filterRelation = this.#includes[includedType];
 
         if (filterRelation) {
-            return this.getStore()
-                .find(includedType, (item) => filterRelation(parentObject, item))
-                .then(data => {
-                    if (filterFunction) {
-                        return data.filter(filterFunction);
-                    }
+            return parentObject.load()
+                .catch(() => {})
+                .then(() => {
+                    return this.getStore()
+                        .find(includedType, (item) => filterRelation(parentObject, item))
+                        .then(data => filterFunction ? data.filter(filterFunction) : data);
+                })
 
-                    return data;
-                });
         } else {
             return Promise.reject("The relation doesn't exist");
         }
@@ -148,6 +147,7 @@ export default class Model {
     };
 
     #addRelationByField = (model, localField, remoteField="id") => {
+
         const filterFunction = (parentObject, child) => {
             return parentObject[localField] === child[remoteField];
         };
