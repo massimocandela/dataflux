@@ -24,9 +24,27 @@ export default class PersistentStore extends Store{
             });
     };
 
+    whenSaved = (type) => {
+        return this.getDiff(type)
+            .then(({ inserted, updated, deleted }) => {
+
+                if (inserted.length === 0 && updated.length === 0 && deleted.length === 0) {
+                    return true;
+                } else if (this.options.autoSave){
+                    return this._saveDiff(type, { inserted, updated, deleted });
+                } else {
+                    return Promise.reject("Save must be invoked manually");
+                }
+            });
+    };
+
     save = () => {
         this._busy = true;
         this.pubSub.publish("save", "start");
+
+        if (this._delayedSaveTimer) {
+            clearTimeout(this._delayedSaveTimer);
+        }
 
         return Promise.all(Object.keys(this.models).map(this._saveByType))
             .then(data => {
@@ -72,25 +90,26 @@ export default class PersistentStore extends Store{
             });
     };
 
+    _saveDiff = (type, {inserted, updated, deleted}) => {
+        const model = this.models[type].model;
+
+        // Operations order:
+        // 1) insert
+        // 2) update
+        // 3) delete
+        return model.insertObjects(inserted.map(i => i.object))
+            .then(() => this.applyDiff({inserted}, type))
+            .then(() => model.updateObjects(updated.map(i => i.object)))
+            .then(() => this.applyDiff({updated}, type))
+            .then(() => model.deleteObjects(deleted.map(i => i.object)))
+            .then(() => this.applyDiff({deleted}, type));
+    };
+
     _saveByType = (type) => {
         return this.getDiff(type)
-            .then(({inserted, updated, deleted}) => {
-
-                const model = this.models[type].model;
-
-                // Operations order:
-                // 1) insert
-                // 2) update
-                // 3) delete
-                return model.insertObjects(inserted.map(i => i.object))
-                    .then(() => this.applyDiff({inserted}, type))
-                    .then(() => model.updateObjects(updated.map(i => i.object)))
-                    .then(() => this.applyDiff({updated}, type))
-                    .then(() => model.deleteObjects(deleted.map(i => i.object)))
-                    .then(() => this.applyDiff({deleted}, type));
-            });
+            .then(diff => this._saveDiff(type, diff));
     };
-    
+
     delayedSave = () => {
         if (this.options.autoSave) {
             if (this._delayedSaveTimer) {

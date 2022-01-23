@@ -4,7 +4,7 @@ import PubSub from "./PubSub";
 export default class Store {
     constructor(options={}) {
         this.options = {
-            autoSave: options.autoSave !== undefined ? options.autoSave : 5000,
+            autoSave: options.autoSave !== undefined ? options.autoSave : true,
             saveDelay: options.saveDelay || 1000,
             lazyLoad: options.lazyLoad || false
         };
@@ -122,6 +122,12 @@ export default class Store {
         });
     };
 
+    hasChanged (type, object) {
+        const obj = this.models[type].storedObjects[object.getId()];
+
+        return obj.fingerprint !== obj.object.getFingerprint()
+    };
+
     getDiff (type) {
         return this.#getPromise(type)
             .then(() => {
@@ -136,13 +142,19 @@ export default class Store {
                         inserted.push(object);
                     } else if (object.status === "deleted") {
                         deleted.push(object);
-                    } else if (object.fingerprint !== object.object.getFingerprint()) {
+                    } else if (this.hasChanged(type, object.object)) {
                         updated.push(object);
                     }
                 }
 
                 return { inserted, updated, deleted };
             });
+    };
+
+    #error (error) {
+        error = error.message || error;
+        this.pubSub.publish("error", error);
+        return Promise.reject(error);
     };
 
     #deleteByObject = (object) => {

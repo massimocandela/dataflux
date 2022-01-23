@@ -69,23 +69,40 @@ export default class Model {
     load = (obj) => {
 
         if (this.#loadFunction) {
-            const res = this.#loadFunction(obj.toJSON());
 
-            if (typeof(res) === "string") {
-                return this.#axios({
-                    method: "get",
-                    url: res,
-                    responseType: "json"
+            return this.getStore().whenSaved(this.getType())
+                .catch(() => {
+                    throw new Error("You cannot perform load() on an unsaved object.");
                 })
-                    .then(data => applyData(obj, data.data));
-            } else {
-                return res
-                    .then(data => applyData(obj, data));
-            }
+                .then(() => {
+                    const res = this.#loadFunction(obj.toJSON());
+
+                    if (typeof(res) === "string") {
+                        return this.#axios({
+                            method: "get",
+                            url: res,
+                            responseType: "json"
+                        })
+                            .then(data => data.data);
+                    } else {
+                        return res;
+                    }
+                })
+                .then(data => applyData(obj, data))
+                .catch((error) => {
+                    return this.#error(error);
+                });
+
         } else {
-            return Promise.reject("You must define a loading function in the model to enable load().");
+            return this.#error("You must define a loading function in the model to enable load().");
         }
     };
+
+    #error (error) {
+        error = error.message || error;
+        this.getStore().pubSub.publish("error", error);
+        return Promise.reject(error);
+    }
 
     addRelation = (model, param2, param3) => {
 
@@ -121,7 +138,7 @@ export default class Model {
                 })
 
         } else {
-            return Promise.reject("The relation doesn't exist");
+            return this.#error("The relation doesn't exist");
         }
     };
 
@@ -131,7 +148,14 @@ export default class Model {
 
     retrieveAll = () => {
         return executeHook("retrieve", this.#retrieveHook, null, this.#axios)
-            .then(this.#toArray);
+            .then(data => {
+                if (Array.isArray(data)) {
+                    return data;
+                } else {
+                    this.#singleItemQuery = true;
+                    return [data];
+                }
+            });
     };
 
     insertObjects = (objects) => {
@@ -173,7 +197,6 @@ export default class Model {
         if (Array.isArray(data)) {
             return data;
         } else {
-            this.#singleItemQuery = true;
             return [data];
         }
     };
