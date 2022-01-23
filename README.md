@@ -30,23 +30,34 @@ Create your global store by creating a file (e.g., named `store.js`) containing 
 Consider the following hypothetical store/model declaration common to all the examples below:
 
 ```js
+// Content of your store.js
 import {Store, Model} from "dataflux";
 
+// We create a new Store
 const store = new Store();
-const author = new Model("author", `https://rest.example.net/api/v1/authors`);
-const book = new Model("book", `https://rest.example.net/api/v1/books`);
 
-store.addModel(author);
+// We now create two models, "author" and "book". 
+// Both of them are auto generated based on the output of a REST API.
+// The REST API does NOT need to provide a specific format.
+// E.g., /books returns [{"title": "Hamlet", "year": 1600}, ...].
+// See "REST API format" below for more info.
+const book = new Model("book", `https://api.example.net/books`);
+const author = new Model("author", `https://api.example.net/authors`);
+
+// We add the models to the store
 store.addModel(book);
+store.addModel(author);
 
-// An object relation between author.id and book.authorId as follows
+// Optionally, we can declare relations among models.
+// E.g., we can declare that an author has one or more books.
 author.addRelation(book, "id", "authorId");
+// The relation will provide all the books where author.id = book.authorId
 
 export default store;
 ```
 
 
-The store can be initialized with [various options](#configuration). You need only one store for the entire application, that's why you should declare it in its own file and import it in multiple places.
+The store can be initialized with [various options](#configuration). You need only one store for the entire application, that's why you should declare it in its own file (store.js in this case) and import it in multiple places.
 
 The creation of a model requires at least a name and a url. GET, POST, PUT, and DELETE operations are going to be performed against the same url. [Models can be created with considerably more advanced options.](#models-creation)
 
@@ -55,28 +66,31 @@ A JS object is automatically created for each item returned by the API, for each
 
 ### Example 1
 
-Retrieve and edit an author not knowing the ID:
+Retrieve and edit an author by name and surname:
 
 ```js
-import store from "./store";
+import store from "./store"; // Import our store.js
 
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
         .then(([author]) => {
+
+          // We got the author, let's now edit it
           author.set("country", "Italy");
           author.set("type", "poet");
-          // Nothing else to do, the store does a single PUT request to the model's API about the edited object
         });
 ```
 
-> You don't necessarily need to use `object.set` to edit an object attribute. You could do `author.country = "Italy"`. However, this approach relies on a periodic detection of changes (while `.set` triggers an update immediately). Check the `autoSave` option for more information
+Nothing else to do! After your edit, the store will do a single PUT request to the model's API to save the edited object. This behavior can be disabled, see next example.
+
+> You don't necessarily need to use `object.set` to edit an object attribute. You could do `author.country = "Italy"`. However, this approach has disadvantages, read [editing objects](#editing-objects) for more information
 
 ### Example 2
 
-Operations without autoSave:
+DataFlux automatically sends the edited objects back to the API to be saved. However, you can disable this behavior and manually instruct the store when to save. 
 
 ```js
-// To disable autoSave you must declare the store as follows
+// To disable autoSave you must declare the store (in store.js) as follows
 const store = new Store({autoSave: false});
 ```
 
@@ -86,11 +100,13 @@ The same example above now becomes:
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
         .then(([author]) => {
-          // When autoSave = false, you can still use author.set, but there is no actual benefit
+            
+          // When autoSave is false, author.set("country", "Italy") and 
+          // author.country = "Italy" are equivalent
           author.country = "Italy"
           author.type = "poet"
 
-          store.save(); // Even if we changed only one author, prefer always store.save() to author.save()
+          store.save(); // Instruct the store to save
         });
 ```
 
@@ -129,6 +145,7 @@ author.getRelation("book");
 
 If you use `subscribe` instead of `find`, you can provide a callback to be invoked when data is ready or there is a change in the data.
 
+_**DataFlux remembers your query and calls your callback every time any change is affecting the result of your query!**_
 
 ```js
 const drawBooksCallback = (books) => {
@@ -139,7 +156,7 @@ const drawBooksCallback = (books) => {
 store.subscribe("book", drawBooks, ({price}) => price < 20);
 ```
 
-If now somewhere a book is inserted/deleted/edited:
+If now a book is inserted/deleted/edited:
 * if the book has `price < 20`,  `drawBooksCallback` will be called again with the new dataset;
 * if the book has `price > 20`,  `drawBooksCallback` will NOT be called again (because the new book doesn't impact our selection).
 
@@ -154,11 +171,11 @@ store.unsubscribe(subKey); // Unsubscribe
 ### Example 6 - Observability + React
 
 The integration with React is offered transparently when using the store inside a `React.Component`.
-You can use two methods: `findOne`, and `findAll`.
+You can use two methods: `findOne`, and `findAll` (which are a react-specific syntactic sugar over `subscribe`).
 
-> Since the store is able to detect changes deep in a nested structure, you will not have to worry about the component not re-rendering. Also, the setState will only be triggered when the next change of the dataset is really impacting your selection.
+**_Since the store is able to detect changes deep in a nested structure, you will not have to worry about the component not re-rendering. Also, the setState will be triggered ONLY when the next change of the dataset is impacting your selection._**
 
-React Component example
+React Component example:
 ```jsx
 class MyComponent extends React.Component {
   constructor(props) {
@@ -168,9 +185,9 @@ class MyComponent extends React.Component {
   componentDidMount() {
     // Get all books with a price < 20
     store.findAll("book", "books", this, ({price}) => price < 20);
-    // Every time the dataset changes, a setState will be automatically 
-    // performed. An attribute "books" will be added/updated in the 
-    // state (the rest of the state remains unchanged).
+    // An attribute "books" will be added/updated in the 
+    // state (the rest of the state remains unchanged) every time
+    // a book in our selection is inserted/deleted/edited.
 
     // findAll is a syntactic sugar for:
     // const callback = (books) => {this.setState({...this.state, books})};
@@ -185,7 +202,7 @@ class MyComponent extends React.Component {
                     onTitleChange={(title) => book.set("title", title)}
                     // onTitleChange will alter the book and so the current 
                     // state of "books" (a setState will be performed).
-                    //
+                    
                     // Alternatively:
                     // onTitleChange={store.handleChange(book, "title")} 
                     // is a syntactic sugar of the function above
@@ -194,9 +211,9 @@ class MyComponent extends React.Component {
 }
 ```
 
-The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the search, the first is returned).
+The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the query, the first is returned).
 
-When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll` injects the unsubscribe call inside `componentWillUnmount`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe` and `store.unsubscribe` instead of `store.findAll`, to avoid side effects when the component is unmounted.
+When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll()` injects the unsubscribe call inside `componentWillUnmount()`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe()` and `store.unsubscribe()` instead of `store.findAll()`, to avoid side effects when the component is unmounted.
 
 ## Configuration
 
@@ -216,7 +233,7 @@ The store can be configured with the following options:
 A model can be simply created with:
 
 ```js
-const book = new Model("book", `https://rest.example.net/api/v1/books`);
+const book = new Model("book", `https://api.example.net/books`);
 ```
 
 However, sometimes you may want to define a more complex interaction with the API. In such cases you can pass options to perform more elaborated model's initializations.
