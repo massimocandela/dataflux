@@ -6,6 +6,26 @@ class ObserverStore extends PersistentStore{
     constructor(options) {
         super(options);
         this._subscribed = {};
+        this._multipleSubscribed = {};
+    };
+
+    multipleSubscribe = (subscriptions, callback) => {
+
+        return Promise.all(subscriptions
+            .map((sub, index)  => {
+                const attrs = Array.from(Array(index + 1)).map(() => null);
+
+                this.subscribe(sub[0], sub[1], (data) => {
+                    attrs[index] = data;
+                    return callback(...attrs);
+                });
+            }))
+            .then(subKeys => {
+                const subKey = uuidv4();
+                this._multipleSubscribed[subKey] = subKeys;
+
+                return subKey;
+            });
     };
 
     subscribe = (type, callback, filterFunction) => {
@@ -30,15 +50,22 @@ class ObserverStore extends PersistentStore{
     };
 
     unsubscribe = (key) => {
-        for (let type in this._subscribed) {
-            for (let id in this._subscribed[type]) {
-                this._subscribed[type][id] = this._subscribed[type][id]
-                    .filter(i => {
-                        return i.subKey !== key
-                    });
+        if (this._multipleSubscribed[key]){
+            for (let sub of this._multipleSubscribed[key]) {
+                this.unsubscribe(sub);
+            }
+            delete this._multipleSubscribed[key];
+        } else {
+            for (let type in this._subscribed) {
+                for (let id in this._subscribed[type]) {
+                    this._subscribed[type][id] = this._subscribed[type][id]
+                        .filter(i => {
+                            return i.subKey !== key
+                        });
 
-                if (this._subscribed[type][id].length === 0) {
-                    delete this._subscribed[type][id];
+                    if (this._subscribed[type][id].length === 0) {
+                        delete this._subscribed[type][id];
+                    }
                 }
             }
         }
