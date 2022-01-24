@@ -14,4 +14,3 @@ A clear and concise description of what you want to happen.
 A clear and concise description.
 
 **Provide an example**
-Provide an example in terms of prefixes and BGP messages. Possibly provide a snippet of config.yml and prefixes.yml.

@@ -168,6 +168,23 @@ const subKey = store.subscribe("book", drawBooks, ({price}) => price < 20); // S
 store.unsubscribe(subKey); // Unsubscribe
 ```
 
+You can also do multiple subscriptions at once:
+
+```js
+const subscriptions = [
+    ["book", ({title}) => title === "The little prince"], // Model name and filter function
+    ["author"], // No filter function, all objects returned
+];
+
+const callback = ([books, authors]) => {
+    // Objects are ready
+};
+
+const subKey = store.multipleSubscribe(requests, callback); // Subscribe
+
+store.unsubscribe(subKey); // Unsubscribe
+```
+
 ### Example 6 - Observability + React
 
 The integration with React is offered transparently when using the store inside a `React.Component`.
@@ -435,14 +452,29 @@ author1.getRelation("book", (book) => book.price < 20)
 
 The store has the following method.
 
-| Method                       | Description                                                                                                                                                |
-|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| addModel(model)              | Introduce a new model to the store. If lazyLoad = false (default), the model is populated with the objects coming from the API.                            |
-| get(type, id)                | It allows to retrieve an object based on its type and store's ID (see `getId()` in [objects methods](#objects-methods). The type is the name of the model. |
-| find(type,filterFunction)    | The promise-oriented method to access objects given a type and a filter function. See [example 1](#example-1).                                             |
-| delete(objects)              | It deletes an array of objects. See [example 1](#example-3).                                                                                               |
-| delete(type, filterFunction) | It deleted objects given an array and a filter function. See [example 1](#example-3).                                                                      |
-| insert(type, object)         | It creates a new object of a given type and inserts it in the store.                                                                                       |
+| Method                                                 | Description                                                                                                                                                                                                                                                                                                                                                                                                        |
+|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| on(event, callback)                                    | Method to subscribe to the events emitted by the store. See [events](#store-events) below.                                                                                                                                                                                                                                                                                                                         |
+| addModel(model)                                        | Introduce a new model to the store. If lazyLoad = false (default), the model is populated with the objects coming from the API.                                                                                                                                                                                                                                                                                    |
+| get(type, id)                                          | It allows to retrieve an object based on its type and store's ID (see `getId()` in [objects methods](#objects-methods). The type is the name of the model.                                                                                                                                                                                                                                                         |
+| find(type, filterFunction)                             | The promise-oriented method to access objects given a type and a filter function. If the filter function is missing, all the objects are returned. See [example 1](#example-1).                                                                                                                                                                                                                                    |
+| delete(objects)                                        | It deletes an array of objects. See [example 1](#example-3).                                                                                                                                                                                                                                                                                                                                                       |
+| delete(type, filterFunction)                           | It deleted objects given an array and a filter function. See [example 1](#example-3).                                                                                                                                                                                                                                                                                                                              |
+| insert(type, object)                                   | It creates a new object of a given type and inserts it in the store.                                                                                                                                                                                                                                                                                                                                               |
+| subscribe(type, callback, filterFunction)              | The callback-oriented method to access objects given a type and a filter function. It returns the key of the subscription, needed to unsubscribe. If the filter function is missing, all the objects are returned. **DataFlux remembers your query and calls the callback every time any change is affecting the result of your query.** See [example 5](#example-5---observability).                              |
+| multipleSubscribe(subscriptions, callback)             | A method to subscribe to multiple models. The first parameter is an array of models' names and filterFunctions, the second parameter is the callback to be called when the cumulative dataset is ready. E.g., `multipleSubscribe([["book", filterFunction1], ["author", filterFunction2]], callback)`. It returns the key of the subscription. See [example 5](#example-5---observability).                        |
+| unsubscribe(key)                                       | Method to terminate a subscription given a subscription key. See [example 5](#example-5---observability).                                                                                                                                                                                                                                                                                                          |
+| findOne(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. If multiple objects satisfy the query, only the first is selected. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. See [example 6](#example-6---observability--react). |
+| findAll(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. If the filter function is missing, all the objects are returned. See [example 6](#example-6---observability--react).   |
+
+## Store events
+The store emits the following events:
+
+| Name    | Description                                                                                                                           |
+|---------|---------------------------------------------------------------------------------------------------------------------------------------|
+| error   | To listen the errors emitted by the store.                                                                                            |
+| save    | Possible emitted values are `start` and `end`. They are emitted when the store starts/finishes to persist the data (API interaction). |
+| loading | The event is emitted while a new model is loaded. The value contains something like `{status: "start", model: "book"}`                |
 
 ## Objects methods
 Each object created is enriched with the following methods.
