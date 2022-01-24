@@ -15,7 +15,7 @@ class ObserverStore extends PersistentStore{
             .map((sub, index)  => {
                 const attrs = Array.from(Array(index + 1)).map(() => null);
 
-                this.subscribe(sub[0], sub[1], (data) => {
+                return this.subscribe(sub[0], sub[1], (data) => {
                     attrs[index] = data;
                     return callback(...attrs);
                 });
