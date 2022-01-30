@@ -97,6 +97,7 @@
     "batch-promises": "^0.0.3",
     "brembo": "^2.0.6",
     "crc-32": "^1.2.0",
+    "moment": "^2.29.1",
     "uuid": "^8.3.2"
   },
   "resolutions": {}

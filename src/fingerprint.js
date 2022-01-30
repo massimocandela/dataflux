@@ -1,10 +1,20 @@
+import moment from "moment";
+
 const CRC32 = require('crc-32');
 
 const _getFingerprint = (object) => {
 
     switch(typeof(object)) {
         case "object":
-            return `o:${(object !== null) ? getObjectFingerprint(object) : "null"}`;
+            if (object._isAMomentObject) {
+                return `m:${object.toISOString()}`;
+            } else if (object instanceof Date) {
+                return `m:${moment(object).toISOString()}`;
+            } else if (object !== null) {
+                return `o:${getObjectFingerprint(object)}`;
+            } else {
+                return "o:null";
+            }
         case "boolean":
             return `b:${object?"t":"f"}`;
         case "function":

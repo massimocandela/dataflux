@@ -44,6 +44,7 @@ const createTestStore  = (options) => {
     });
 
     const author = new Model("author", {
+        parseMoment: true,
         retrieve: () => apiAnswer(null, authorsFile)
     });
 

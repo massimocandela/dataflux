@@ -1,17 +1,28 @@
 import fingerprint from "./fingerprint";
 import { v4 as uuidv4 } from "uuid";
+import moment from "moment/moment";
+
+const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 
 export default class Obj {
     #loaded = false;
     constructor(values, model) {
         this.getModel = () => model;
-        Object.keys(values)
-            .forEach(key => {
-                this[key] = values[key];
-            });
+
+        const frEach = model.options.parseMoment ?
+            key => {
+                if (dateRegex.test(values[key])) {
+                    const mmnt = moment(values[key]);
+                    this[key] = mmnt.isValid() ? mmnt : values[key];
+                } else {
+                    this[key] = values[key];
+                }
+            } :
+            key => this[key] = values[key];
+
+        Object.keys(values).forEach(frEach);
 
         let id;
-
         if (this.id && (typeof(this.id) === "string" || typeof(this.id) === "number")) {
             id = this.id.toString();
         } else {
@@ -71,7 +82,11 @@ export default class Obj {
         const out = {};
 
         for (let a of attrs) {
-            if (typeof(this[a]) !== "function") {
+            if (this[a] instanceof moment) {
+                out[a] = this[a].toISOString();
+            } else if (this[a] instanceof Date) {
+                out[a] = moment(this[a]).toISOString();
+            } else if (typeof(this[a]) !== "function") {
                 out[a] = this[a];
             }
         }

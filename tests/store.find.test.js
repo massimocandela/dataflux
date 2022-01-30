@@ -64,7 +64,7 @@ describe("Store find", function () {
                 const first = data[0];
                 first.getRelation("author")
                     .then(authors => {
-                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0, createdAt: "2022-01-07T21:38:50.295Z"};
                         expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
                         done();
                     })
@@ -77,7 +77,7 @@ describe("Store find", function () {
                 const first = data[0];
                 first.getRelation("author", ({name}) => name === "Marijn")
                     .then(authors => {
-                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0, createdAt: "2022-01-07T21:38:50.295Z"};
                         expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
 
                         first.getRelation("author", ({name}) => name === "Dante")
@@ -95,7 +95,7 @@ describe("Store find", function () {
                 const first = data[0];
                 first.getRelation("author2")
                     .then(authors => {
-                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0};
+                        const expected = {name: 'Marijn', surname: 'Haverbeke', id: 0, createdAt: "2022-01-07T21:38:50.295Z"};
                         expect(JSON.stringify(authors[0].toJSON())).to.equal(JSON.stringify(expected));
                         done();
                     })

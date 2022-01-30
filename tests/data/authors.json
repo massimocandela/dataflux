@@ -2,7 +2,8 @@
   {
     "name": "Marijn",
     "surname": "Haverbeke",
-    "id": 0
+    "id": 0,
+    "createdAt": "2022-01-07T21:38:50.295Z"
   },
   {
     "name": "Nicolás",

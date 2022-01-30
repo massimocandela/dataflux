@@ -29,6 +29,9 @@ export default class Model {
 
     constructor(name, options={}) {
         this.#type = name;
+        this.options = {
+            parseMoment: options.parseMoment
+        };
         this.#store = null;
         this.#includes = {};
         this.#axios = options.axios || axios;
