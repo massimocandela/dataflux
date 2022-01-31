@@ -24,9 +24,16 @@ const getDataStringHook = (hook, data=null, axios) => {
 const setFields = (options, hook) => {
     options.headers = options.headers || {};
     options.headers['X-Fields'] = hook.fields;
+    let params = {};
+
+    if (hook?.fields?.length) {
+        params = {
+            fields: hook.fields.join(",")
+        }
+    }
 
     options.url = brembo.build(options.url, {
-        params: {fields: hook.fields.join(",")}
+        params
     });
 }
 
