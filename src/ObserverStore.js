@@ -10,14 +10,19 @@ class ObserverStore extends PersistentStore{
     };
 
     multipleSubscribe = (subscriptions, callback) => {
+        const dataPayload = {};
+
+        const areAllDone = () => {
+            return subscriptions.map(([name]) => name).every(name => dataPayload[name] !== undefined);
+        };
 
         return Promise.all(subscriptions
             .map((sub, index)  => {
-                const attrs = Array.from(Array(index + 1)).map(() => null);
+                const [name, filterFunction=null] = sub;
 
-                return this.subscribe(sub[0], sub[1], (data) => {
-                    attrs[index] = data;
-                    return callback(...attrs);
+                return this.subscribe(name, filterFunction, (data) => {
+                    dataPayload[name] = data;
+                    return areAllDone() && callback(dataPayload);
                 });
             }))
             .then(subKeys => {
