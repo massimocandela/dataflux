@@ -26,6 +26,7 @@ export default class Model {
     #batchSize;
     #axios
     #loadFunction;
+    #hiddenFields;
 
     constructor(name, options={}) {
         this.#type = name;
@@ -35,6 +36,7 @@ export default class Model {
         this.#store = null;
         this.#includes = {};
         this.#axios = options.axios || axios;
+        this.#hiddenFields = options.hiddenFields || [];
         this.#loadFunction = options.load || null;
 
         if (!name || !options) {
@@ -188,11 +190,19 @@ export default class Model {
         this.#includes[includedType] = filterFunction;
     };
 
+    #removeHiddenFields = (json) => {
+        for (let attribute of this.#hiddenFields) {
+            delete json[attribute];
+        }
+
+        return json;
+    };
+
     #bulkOperation = (objects, action) => {
         if (this.#singleItemQuery) {
-            return batchPromises(this.#batchSize, objects.map(i => i.toJSON()), action);
+            return batchPromises(this.#batchSize, objects.map(i => this.#removeHiddenFields(i.toJSON())), action);
         } else {
-            return action(objects.map(i => i.toJSON()));
+            return action(objects.map(i => this.#removeHiddenFields(i.toJSON())));
         }
     };
 

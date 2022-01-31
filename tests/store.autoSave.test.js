@@ -438,4 +438,111 @@ describe("AutoSave", function() {
                     });
             });
     }).timeout(10000);
+
+    it("autoSave: true - hidden fields", function (done) {
+        const store = new Store({
+            lazyLoad: false,
+            autoSave: false
+        });
+
+        let sets = {
+            inserted: [],
+            updated: [],
+            deleted: []
+        };
+
+        const book = new Model("book", {
+            hiddenFields: ["hidden"],
+            load: () => {
+                return Promise.resolve({title: "test"});
+            },
+            retrieve: () => {
+                return [{id: 1}, {id: 2}];
+            },
+            insert: (objects) => {
+                sets.inserted = objects;
+            },
+            update: (objects) => {
+                sets.updated = objects;
+            },
+            delete: (objects) => {
+                sets.deleted = objects;
+            }
+        });
+
+        store.addModel(book)
+            .then(() => {
+
+                store.find("book")
+                    .then(([book]) => {
+                        book.hidden = true;
+
+                        store.on("error", (message) => {
+                            done(new Error(message));
+                        });
+
+                        store.on("save", (status) => {
+                            if (status === "end"){
+                                expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([{id: 1}]));
+                                done();
+                            }
+                        });
+
+                        store.save();
+                    });
+            });
+    }).timeout(10000);
+
+    it("autoSave: true - set hidden fields", function (done) {
+        const store = new Store({
+            lazyLoad: false,
+            autoSave: false
+        });
+
+        let sets = {
+            inserted: [],
+            updated: [],
+            deleted: []
+        };
+
+        const book = new Model("book", {
+            load: () => {
+                return Promise.resolve({title: "test"});
+            },
+            retrieve: () => {
+                return [{id: 1}, {id: 2}];
+            },
+            insert: (objects) => {
+                sets.inserted = objects;
+            },
+            update: (objects) => {
+                sets.updated = objects;
+            },
+            delete: (objects) => {
+                sets.deleted = objects;
+            }
+        });
+
+        store.addModel(book)
+            .then(() => {
+
+                store.find("book")
+                    .then(([book]) => {
+                        book.set("hidden", true, true);
+
+                        store.on("error", (message) => {
+                            done(new Error(message));
+                        });
+
+                        store.on("save", (status) => {
+                            if (status === "end"){
+                                expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
+                                done();
+                            }
+                        });
+
+                        store.save();
+                    });
+            });
+    }).timeout(10000);
 });

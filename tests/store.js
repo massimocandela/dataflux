@@ -39,6 +39,7 @@ const createTestStore  = (options) => {
     const bookFields = ["isbn"];
     const book = new Model("book", {
         fields: bookFields,
+        hiddenFields: [],
         load: (obj) => loadAnswer(obj.isbn, booksFile),
         retrieve: () => apiAnswer(bookFields, booksFile)
     });

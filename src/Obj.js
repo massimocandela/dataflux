@@ -6,6 +6,7 @@ const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 
 export default class Obj {
     #loaded = false;
+    #setHidden = {};
     constructor(values, model) {
         this.getModel = () => model;
 
@@ -54,18 +55,22 @@ export default class Obj {
     };
 
     get = (attribute) => {
-        return this[attribute];
+        return this.#setHidden[attribute] || this[attribute];
     };
 
     getRelation = (type, filterFunction) => {
         return this.getModel().getRelation(this, type, filterFunction);
     };
 
-    set = (attribute, value) => {
-        if (attribute === "id") {
-            throw new Error("You cannot change the ID");
+    set = (attribute, value, hidden) => {
+        if (hidden) {
+            this.#setHidden[attribute] = value;
+        } else {
+            if (attribute === "id") {
+                throw new Error("You cannot change the ID");
+            }
+            this[attribute] = value;
         }
-        this[attribute] = value;
         return this.getModel().getStore().update([this]);
     };
 
