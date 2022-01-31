@@ -74,6 +74,10 @@ export default class Obj {
         return this.getModel().getStore().update([this]);
     };
 
+    setConstant = (attribute, value) => {
+        this.#setHidden[attribute] = this.#setHidden[attribute] ?? value;
+    };
+
     save = () => {
         return this.getModel().getStore().save([this]);
     };
