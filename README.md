@@ -178,8 +178,7 @@ const subscriptions = [
     ["author"], // No filter function, all objects returned
 ];
 
-const callback = (data) => {
-    const {book, author} = data;
+const callback = ({book, author}) => {
     // Objects are ready
 };
 

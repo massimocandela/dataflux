@@ -17,13 +17,16 @@ class ObserverStore extends PersistentStore{
         };
 
         return Promise.all(subscriptions
-            .map((sub, index)  => {
+            .map(sub  => {
                 const [name, filterFunction=null] = sub;
 
-                return this.subscribe(name, filterFunction, (data) => {
+                const wrappedCallback = (data) => {
                     dataPayload[name] = data;
+
                     return areAllDone() && callback(dataPayload);
-                });
+                };
+
+                return this.subscribe(name, wrappedCallback, filterFunction);
             }))
             .then(subKeys => {
                 const subKey = uuidv4();
