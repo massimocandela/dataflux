@@ -13,7 +13,7 @@ const getDataStringHook = (hook, data=null, axios) => {
         options.headers = hook.headers;
     }
 
-    if (hook.fields) {
+    if (hook?.fields?.length) {
         setFields(options, hook);
     }
 
@@ -24,16 +24,11 @@ const getDataStringHook = (hook, data=null, axios) => {
 const setFields = (options, hook) => {
     options.headers = options.headers || {};
     options.headers['X-Fields'] = hook.fields;
-    let params = {};
-
-    if (hook?.fields?.length) {
-        params = {
-            fields: hook.fields.join(",")
-        }
-    }
 
     options.url = brembo.build(options.url, {
-        params
+        params: {
+            fields: hook.fields.join(",")
+        }
     });
 }
 
@@ -47,7 +42,9 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
             } else {
                 return {
                     method: defaultMethod,
-                    url: defaultUrl
+                    url: defaultUrl,
+                    fields: options.fields || [],
+                    headers: options.headers || {}
                 };
             }
         case "function":
