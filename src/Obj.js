@@ -54,8 +54,8 @@ export default class Obj {
         return fingerprint(this.toJSON());
     };
 
-    get = (attribute) => {
-        return this.#setHidden[attribute] || this[attribute];
+    get = (attribute, defaultValue) => {
+        return this.#setHidden[attribute] ?? this[attribute] ?? defaultValue;
     };
 
     getRelation = (type, filterFunction) => {
