@@ -31,7 +31,8 @@ export default class Model {
     constructor(name, options={}) {
         this.#type = name;
         this.options = {
-            parseMoment: options.parseMoment
+            deep: options.deep ?? true,
+            parseMoment: options.parseMoment ?? false
         };
         this.#store = null;
         this.#includes = {};

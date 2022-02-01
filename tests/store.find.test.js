@@ -102,4 +102,14 @@ describe("Store find", function () {
             });
     });
 
+    it("sub objects", function (done) {
+        store.find("author", ({surname}) => surname === "Rauschmayer")
+            .then(([author]) => {
+
+                expect(JSON.stringify(author.subComponents.map(i => i.toJSON())))
+                    .to.equal(JSON.stringify([{ name: 1 }, { name: 2 }]));
+                done();
+            });
+    }).timeout(10000);
+
 });

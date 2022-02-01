@@ -18,7 +18,18 @@
   {
     "name": "Axel",
     "surname": "Rauschmayer",
-    "id": 3
+    "id": 3,
+    "subComponent": {
+      "type": "contributor"
+    },
+    "subComponents": [
+      {
+        "name": 1
+      },
+      {
+        "name": 2
+      }
+    ]
   },
   {
     "name": "Addy",
