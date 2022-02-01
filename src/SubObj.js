@@ -17,9 +17,9 @@ export default class SubObj extends BasicObj {
                     const mmnt = moment(value);
                     this[key] = mmnt.isValid() ? mmnt : value;
                 } else if (model.options.deep && typeof(value) === "object" && !Array.isArray(value)){
-                    this[key] = new SubObj(this, value, model);
+                    this[key] = new SubObj(this.#parent, value, model);
                 } else if (model.options.deep && Array.isArray(value)){
-                    this[key] = value.map(i => new SubObj(this, i, model));
+                    this[key] = value.map(i => new SubObj(this.#parent, i, model));
                 } else {
                     this[key] = value;
                 }
