@@ -25,15 +25,6 @@ export default class Obj extends BasicObj{
             });
 
         this.getModel = () => model;
-
-        let id;
-        if (this.id && (typeof(this.id) === "string" || typeof(this.id) === "number")) {
-            id = this.id.toString();
-        } else {
-            id = uuidv4();
-        }
-
-        this.getId = () => id;
     };
 
     load = () => {

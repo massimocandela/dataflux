@@ -24,9 +24,6 @@ export default class SubObj extends BasicObj {
                     this[key] = value;
                 }
             });
-
-        this.getId = () => uuidv4();
-
     };
 
     save = () => {

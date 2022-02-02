@@ -1,10 +1,24 @@
 import moment from "moment/moment";
+import {v4 as uuidv4} from "uuid";
 
 export const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 
 export class BasicObj {
     #setHidden = {};
+    #id = null;
     constructor(values, model) {};
+
+    getId = () => {
+        if (!this.#id) {
+            if (this.id && (typeof (this.id) === "string" || typeof (this.id) === "number")) {
+                this.#id = this.id.toString();
+            } else {
+                this.#id = uuidv4();
+            }
+        }
+
+        return this.#id;
+    }
 
     get = (attribute, defaultValue) => {
         return this.#setHidden[attribute] ?? this[attribute] ?? defaultValue;
