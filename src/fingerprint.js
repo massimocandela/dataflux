@@ -6,14 +6,14 @@ const _getFingerprint = (object) => {
 
     switch(typeof(object)) {
         case "object":
-            if (object._isAMomentObject) {
+            if (object == null) {
+                return "o:null";
+            } else if (object._isAMomentObject) {
                 return `m:${object.toISOString()}`;
             } else if (object instanceof Date) {
                 return `m:${moment(object).toISOString()}`;
-            } else if (object !== null) {
-                return `o:${getObjectFingerprint(object)}`;
             } else {
-                return "o:null";
+                return `o:${getObjectFingerprint(object)}`;
             }
         case "boolean":
             return `b:${object?"t":"f"}`;

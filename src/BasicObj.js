@@ -62,13 +62,15 @@ export class BasicObj {
         const out = {};
 
         for (let a of attrs) {
-            if (this[a] instanceof moment) {
+            if (this[a] == null) {
+                out[a] = this[a];
+            } else if (this[a] instanceof moment) {
                 out[a] = this[a].toISOString();
             } else if (this[a] instanceof Date) {
                 out[a] = moment(this[a]).toISOString();
-            } else if (this[a].toJSON) {
+            } else if (typeof(this[a]) === "object" && this[a].toJSON) {
                 out[a] = this[a].toJSON();
-            } else if (Array.isArray(this[a]) && this[a].every(i => i.toJSON)) {
+            } else if (Array.isArray(this[a]) && this[a].every(i => typeof(i) === "object" && i.toJSON)) {
                 out[a] = this[a].map(i => i.toJSON());
             } else if (typeof(this[a]) !== "function") {
                 out[a] = this[a];
