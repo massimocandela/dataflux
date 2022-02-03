@@ -87,7 +87,7 @@ Nothing else to do! After your edit, the store will do a single PUT request to t
 
 ### Example 2
 
-DataFlux automatically sends the edited objects back to the API to be saved. However, you can disable this behavior and manually instruct the store when to save. 
+DataFlux automatically sends the edited objects back to the API to be saved. However, you can disable this behavior and manually instruct the store when to save.
 
 ```js
 // To disable autoSave you must declare the store (in store.js) as follows
@@ -100,7 +100,7 @@ The same example above now becomes:
 // Find the author Dante Alighieri
 store.find("author", ({name, surname}) => name == "Dante" && surname == "Alighieri")
         .then(([author]) => {
-            
+
           // When autoSave is false, author.set("country", "Italy") and 
           // author.country = "Italy" are equivalent
           author.country = "Italy"
@@ -174,12 +174,12 @@ You can also do multiple subscriptions at once:
 
 ```js
 const subscriptions = [
-    ["book", ({title}) => title === "The little prince"], // Model name and filter function
-    ["author"], // No filter function, all objects returned
+  ["book", ({title}) => title === "The little prince"], // Model name and filter function
+  ["author"], // No filter function, all objects returned
 ];
 
 const callback = ({book, author}) => {
-    // Objects are ready
+  // Objects are ready
 };
 
 const subKey = store.multipleSubscribe(requests, callback); // Subscribe
@@ -221,7 +221,7 @@ class MyComponent extends React.Component {
                     onTitleChange={(title) => book.set("title", title)}
                     // onTitleChange will alter the book and so the current 
                     // state of "books" (a setState will be performed).
-                    
+
                     // Alternatively:
                     // onTitleChange={store.handleChange(book, "title")} 
                     // is a syntactic sugar of the function above
@@ -493,11 +493,47 @@ Each object created is enriched with the following methods.
 | getRelation(model, filterFunction) | To get all the objects respecting a specific relation with this object (see [model relations](#model-relations)).                                                                                                                                                                                                                                                   |
 | save()                             | Method to save the object. You can do `store.save()` instead.                                                                                                                                                                                                                                                                                                       |
 | destroy()                          | Method to delete the object. You can do `store.delete()` instead.                                                                                                                                                                                                                                                                                                   |
-
 | toJSON()                           | It returns a pure JSON representation of the object.                                                                                                                                                                                                                                                                                                                |
 | toString()                         | It returns a string representation of the object.                                                                                                                                                                                                                                                                                                                   |
 | getFingerprint()                   | It returns a hash of the object. The hash changes at every change of the object or of any nested object. Useful to detect object changes.                                                                                                                                                                                                                           |
 | getModel()                         | It returns the model of this object. Mostly useful to do `object.getModel().getType()` and obtain a string defining the type of the object.                                                                                                                                                                                                                         |
+### Deeper Objects
+When a model is declared with the option `deep: true` (default, see [model creation](#models-creation)), all the sub objects will also offer many of the methods above.
+
+Imagine the API returns:
+
+```json
+[
+  {
+    "title": "The little prince",
+    "reviews": [
+      {
+        "stars": 4,
+        "comment": "comment 1"
+      },
+      {
+        "stars": 3,
+        "comment": "comment 2"
+      }
+    ]
+  },
+  ...
+]
+```
+
+You can operate on the reviews similarly to how you operate on the main model's objects (book).
+
+```js
+store.find("book")
+      .then(([book]) => {
+        const firstReview = book.reviews[0];
+
+        // Examples of what you can do:
+        firstReview.detroy(); // The first review is removed from the array book.reviews
+        firstReview.set("stars", 5); // Set the stars of the first review to 5
+      });
+```
+
 
 ## Editing objects
 The option `autoSave` can be `true`, `false`, or a number (milliseconds).

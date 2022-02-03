@@ -1,14 +1,15 @@
-import { v4 as uuidv4 } from "uuid";
 import {BasicObj, dateRegex} from "./BasicObj";
 import moment from "moment/moment";
 
 export default class SubObj extends BasicObj {
     #model;
     #parent;
-    constructor(parent, values, model) {
+    #parentField;
+    constructor(parent, field, values, model) {
         super(values, model);
         this.#model = model;
         this.#parent = parent;
+        this.#parentField = field;
 
         Object.keys(values)
             .forEach(key => {
@@ -17,9 +18,9 @@ export default class SubObj extends BasicObj {
                     const mmnt = moment(value);
                     this[key] = mmnt.isValid() ? mmnt : value;
                 } else if (model.options.deep && typeof(value) === "object" && !Array.isArray(value)){
-                    this[key] = new SubObj(this.#parent, value, model);
+                    this[key] = new SubObj(this.#parent, key, value, model);
                 } else if (model.options.deep && Array.isArray(value)){
-                    this[key] = value.map(i => new SubObj(this.#parent, i, model));
+                    this[key] = value.map(i => new SubObj(this.#parent, key, i, model));
                 } else {
                     this[key] = value;
                 }
@@ -31,7 +32,12 @@ export default class SubObj extends BasicObj {
     };
 
     destroy = () => {
-        return this.#model.getStore().delete([this.#parent]);
+        if (Array.isArray(this.#parent[this.#parentField])) {
+            this.#parent[this.#parentField] = this.#parent[this.#parentField].filter(i => i.getId() !== this.getId());
+        } else if (this.#parent[this.#parentField]?.getId) {
+            this.#parent[this.#parentField] = null;
+        }
+        return this.#model.getStore().update([this.#parent]);
     };
 
     update = () => {

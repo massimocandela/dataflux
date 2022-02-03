@@ -16,9 +16,9 @@ export default class Obj extends BasicObj{
                     const mmnt = moment(value);
                     this[key] = mmnt.isValid() ? mmnt : value;
                 } else if (model.options.deep && typeof(value) === "object" && !Array.isArray(value)){
-                    this[key] = new SubObj(this, value, model);
+                    this[key] = new SubObj(this, key, value, model);
                 } else if (model.options.deep && Array.isArray(value)){
-                    this[key] = value.map(i => new SubObj(this, i, model));
+                    this[key] = value.map(i => new SubObj(this, key, i, model));
                 } else {
                     this[key] = value;
                 }
