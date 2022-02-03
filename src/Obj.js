@@ -1,7 +1,5 @@
 import fingerprint from "./fingerprint";
-import { v4 as uuidv4 } from "uuid";
-import {BasicObj, dateRegex} from "./BasicObj";
-import moment from "moment/moment";
+import {BasicObj, setValues} from "./BasicObj";
 import SubObj from "./SubObj";
 
 export default class Obj extends BasicObj{
@@ -9,20 +7,7 @@ export default class Obj extends BasicObj{
     constructor(values, model) {
         super(values, model);
 
-        Object.keys(values)
-            .forEach(key => {
-                const value = values[key];
-                if (model.options.parseMoment && dateRegex.test(value)) {
-                    const mmnt = moment(value);
-                    this[key] = mmnt.isValid() ? mmnt : value;
-                } else if (model.options.deep && typeof(value) === "object" && !Array.isArray(value)){
-                    this[key] = new SubObj(this, key, value, model);
-                } else if (model.options.deep && Array.isArray(value)){
-                    this[key] = value.map(i => new SubObj(this, key, i, model));
-                } else {
-                    this[key] = value;
-                }
-            });
+        setValues(values, model, SubObj, this, this);
 
         this.getModel = () => model;
     };

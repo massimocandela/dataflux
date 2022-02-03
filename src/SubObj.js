@@ -1,4 +1,4 @@
-import {BasicObj, dateRegex} from "./BasicObj";
+import {BasicObj, dateRegex, setValues} from "./BasicObj";
 import moment from "moment/moment";
 
 export default class SubObj extends BasicObj {
@@ -11,20 +11,7 @@ export default class SubObj extends BasicObj {
         this.#parent = parent;
         this.#parentField = field;
 
-        Object.keys(values)
-            .forEach(key => {
-                const value = values[key];
-                if (model.options.parseMoment && dateRegex.test(value)) {
-                    const mmnt = moment(value);
-                    this[key] = mmnt.isValid() ? mmnt : value;
-                } else if (model.options.deep && typeof(value) === "object" && !Array.isArray(value)){
-                    this[key] = new SubObj(this.#parent, key, value, model);
-                } else if (model.options.deep && Array.isArray(value)){
-                    this[key] = value.map(i => new SubObj(this.#parent, key, i, model));
-                } else {
-                    this[key] = value;
-                }
-            });
+        setValues(values, model, SubObj, this.#parent, this);
     };
 
     save = () => {
