@@ -5,7 +5,7 @@ const addSubscriptionToContext = (context, subKey) => { // I know...
     context.___obs_subkeys.push(subKey);
     context.___obs_unsubscribe = () => {
         for (let key of context.___obs_subkeys || []) {
-            this.unsubscribe(key);
+            context.unsubscribe(key);
         }
     }
     context.componentWillUnmount = function () {
@@ -16,7 +16,6 @@ const addSubscriptionToContext = (context, subKey) => { // I know...
 export default class ReactStore extends ObserverStore {
     constructor(options) {
         super(options);
-
     };
 
     findAll(type, stateAttribute, context, filterFunction) {
@@ -52,7 +51,6 @@ export default class ReactStore extends ObserverStore {
     }
 
     handleChange = (object, name) => {
-
         return (event, rawValue) => {
             const value = event ? (event.target.type === "checkbox" ? event.target.checked : event.target.value) : "";
             object.set(name, value || rawValue || "");
