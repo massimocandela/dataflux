@@ -128,6 +128,10 @@ export default class Store {
         return obj.fingerprint !== obj.object.getFingerprint()
     };
 
+    preload(type){
+        return this.#getPromise(type);
+    }
+
     getDiff (type) {
         return this.#getPromise(type)
             .then(() => {

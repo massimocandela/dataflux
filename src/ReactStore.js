@@ -1,22 +1,23 @@
 import ObserverStore from "./ObserverStore";
 
-const addSubscriptionToContext = (context, subKey) => { // I know...
-    context.___obs_subkeys = context.___obs_subkeys || [];
-    context.___obs_subkeys.push(subKey);
-    context.___obs_unsubscribe = () => {
-        for (let key of context.___obs_subkeys || []) {
-            context.unsubscribe(key);
-        }
-    }
-    context.componentWillUnmount = function () {
-        context.___obs_unsubscribe();
-    }
-}
-
 export default class ReactStore extends ObserverStore {
     constructor(options) {
         super(options);
     };
+
+    #addSubscriptionToContext = (context, subKey) => { // I know...
+        context.___obs_subkeys = context.___obs_subkeys || [];
+        context.___obs_subkeys.push(subKey);
+        context.___obs_unsubscribe_context = this;
+        context.___obs_unsubscribe = () => {
+            for (let key of context.___obs_subkeys || []) {
+                context.___obs_unsubscribe_context.unsubscribe(key);
+            }
+        }
+        context.componentWillUnmount = function () {
+            context.___obs_unsubscribe();
+        }
+    }
 
     findAll(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, false);
@@ -28,7 +29,7 @@ export default class ReactStore extends ObserverStore {
             });
         }, filterFunction);
 
-        addSubscriptionToContext(context, subKey);
+        this.#addSubscriptionToContext(context, subKey);
     };
 
     findOne(type, stateAttribute, context, filterFunction) {
@@ -41,7 +42,7 @@ export default class ReactStore extends ObserverStore {
             });
         }, filterFunction);
 
-        addSubscriptionToContext(context, subKey);
+        this.#addSubscriptionToContext(context, subKey);
     };
 
     #fixState (stateAttribute, context, one) {
@@ -53,7 +54,7 @@ export default class ReactStore extends ObserverStore {
     handleChange = (object, name) => {
         return (event, rawValue) => {
             const value = event ? (event.target.type === "checkbox" ? event.target.checked : event.target.value) : "";
-            object.set(name, value || rawValue || "");
+            object.set(name, value ?? rawValue ?? "");
         }
     };
 
