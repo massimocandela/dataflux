@@ -1,5 +1,4 @@
-import {BasicObj, dateRegex, setValues} from "./BasicObj";
-import moment from "moment/moment";
+import {BasicObj, setValues} from "./BasicObj";
 
 export default class SubObj extends BasicObj {
     #model;

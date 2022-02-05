@@ -1,6 +1,8 @@
 import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUtils";
 import batchPromises from "batch-promises";
 import axios from "axios";
+import {setValues} from "./BasicObj";
+import SubObj from "./SubObj";
 
 const applyData = (obj, data) => {
     for (let att in data) {
@@ -31,14 +33,15 @@ export default class Model {
     constructor(name, options={}) {
         this.#type = name;
         this.options = {
+            ...options,
             deep: options.deep ?? true,
             parseMoment: options.parseMoment ?? false
         };
         this.#store = null;
         this.#includes = {};
-        this.#axios = options.axios || axios;
-        this.#hiddenFields = options.hiddenFields || [];
-        this.#loadFunction = options.load || null;
+        this.#axios = this.options.axios || axios;
+        this.#hiddenFields = this.options.hiddenFields || [];
+        this.#loadFunction = this.options.load || null;
 
         if (!name || !options) {
             throw new Error("A Model requires at least a name and a hook");
@@ -76,8 +79,9 @@ export default class Model {
 
         if (this.#loadFunction) {
 
-            return this.getStore().whenSaved(this.getType())
-                .catch(() => {
+            return this.getStore()
+                .whenSaved(this.getType())
+                .catch((e) => {
                     throw new Error("You cannot perform load() on an unsaved object.");
                 })
                 .then(() => {
@@ -94,7 +98,11 @@ export default class Model {
                         return res;
                     }
                 })
-                .then(data => applyData(obj, data))
+                .then(data => {
+                    setValues(data, this, SubObj, null, obj);
+
+                    return data;
+                })
                 .catch((error) => {
                     return this.#error(error);
                 });
@@ -135,8 +143,9 @@ export default class Model {
         const filterRelation = this.#includes[includedType];
 
         if (filterRelation) {
-            return parentObject.load()
-                .catch(() => {})
+            return (parentObject.getModel().options.load ?
+                parentObject.load().catch(() => {}) :
+                Promise.resolve())
                 .then(() => {
                     return this.getStore()
                         .find(includedType, (item) => filterRelation(parentObject, item))

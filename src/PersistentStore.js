@@ -81,12 +81,18 @@ export default class PersistentStore extends Store{
 
     update(objects, skipSave) {
         return super.update(objects)
-            .then(data => {
-                if (!skipSave){
+            .then(objects => {
+
+                if (skipSave) {
+                    for (let object of objects) {
+                        const type = object.getModel().getType();
+                        this.models[type].storedObjects[object.getId()].fingerprint = object.getFingerprint();
+                    }
+                } else {
                     this.delayedSave();
                 }
 
-                return data;
+                return objects;
             });
     };
 
