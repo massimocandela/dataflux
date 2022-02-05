@@ -12,6 +12,10 @@ export default class Store {
         this.pubSub = new PubSub();
     };
 
+    getModels = () => {
+        return Object.keys(this.models);
+    };
+
     on(channel, callback) {
         this.pubSub.subscribe(channel, callback);
     };
