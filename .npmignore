@@ -7,3 +7,5 @@ src/
 tests/
 .gitignore
 .github/
+_config.yml
+CNAME
