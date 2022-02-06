@@ -102,7 +102,8 @@ export const executeHook = (type, hook, data, axios) => {
         case "object" :
             return getDataStringHook(hook, data, axios);
         case "function":
-            return hook(data);
+            const res = hook(data);
+            return typeof(res) === "string" ? getDataStringHook(res, data, axios) : res;
         default:
             return Promise.reject(`The ${type} hook must be a URL or a function returning a promise`);
     }

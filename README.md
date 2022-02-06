@@ -276,6 +276,7 @@ All the possible options for a model creation are (they are all optional):
 | parseMoment  | Automatically creates Moment.js objects out of ISO8601 strings. E.g., if an object has a property `createdAt: "2022-01-07T21:38:50.295Z"`, this will be transformed to a moment object.                                                                                                                                                                                                                                                                                                                                                                                       |                      | 
 | hiddenFields | An array of attribute names that will never be sent back to the API. E.g., if you set `hiddenFields: ["pages"]`, a book object can contain an attribute `pages` locally, but this will be stripped out in PUT/POST requests.                                                                                                                                                                                                                                                                                                                                                  |
 | deep         | A boolean defining if nested objects should be enriched with the object methods.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | true                 |
+| lazyLoad     | A boolean defining if the model should be lazy loaded on the first use. This takes precedence over the lazyLoad declared during store initialization.                                                                                                                                                                                                                                                                                                                                                                                                                         | false                |
 
 ### Operations
 As described in the table above, there are four possible operations: **retrieve, insert, update,** and **delete**. An operation can be defined as an operation object or a function.
@@ -341,8 +342,10 @@ const book = new Model("book", options);
 
 #### Operation function
 
-To be even more flexible, you can pass functions and handle yourself the operations. An operation function must return a promise, the promise must return an array of JSON objects when these are ready.
+To be even more flexible, you can pass functions to generate the API urls or retrieve the data. An operation function can return a url or a promise. If the function returns a promise, the promise must resolve in an array of JSON objects when these are ready.
 
+
+Example of operation function returning from the API and submitting to the API an array of JSON objects.
 
 ```js
 const options = {
@@ -350,18 +353,68 @@ const options = {
     // 1) get the data from the API 
     // 2) tranforms the data
     // 3) return the data to the store
-    return Promise.resolve(data);
+    return axios({ // Example with axios, but you can use whatever you prefer
+      url: "https://api.example.net/example",
+      method: "get"
+    });
   },
   insert: (data) => {
     // 1) recieve the data from the store
     // 2) transform the data however you like 
-    // 3) send data to server and resolve empty
-    return Promise.resolve();
+    // 3) send data to server
+    return axios({
+      url: "https://api.example.net/example",
+      data,
+      method: "post"
+    });
   }
 };
 
 const book = new Model("book", options);
 ```
+
+#### Object factory
+
+In the examples we saw above, objects are retrieved from an API returning one or more objects. However, sometimes object creation requires a more complex logic. This can be summarized as: the object must be created based on some input parameter
+
+Typical examples are:
+* There is no API returning all the objects of a given type, you can only access specific objects based on a parameter (e.g., based on the ID).
+* It doesn't make sense to retrieve all the objects of a given type, since the client needs to access only to a subset of them.
+* The APIs to get/post/put/delete objects are parametric (e.g., you need to specify the ID in the url).
+* The model is polymorphic, and the final object's format is based on some parameter;
+* The model is polymorphic, a different API is used to retrieve the objects based on some input parameter (e.g., they are all books, but there are different APIs by genre).
+
+This is a well-know problem, described by the [factory design pattern](https://refactoring.guru/design-patterns/factory-method).
+In DataFlux, the store provides for this use case the `.factory()` method that allows you to implement Factory.
+
+To create a factory, you must declare a model as follows:
+
+```js
+const author = new Model("author", {
+  lazyLoad: true, // It MUST be lazyLoaded
+  retrieve: ({params}) => { // The retrieve function now takes some parameters
+
+    // You can return a URL or directly one or more JSON objects
+    return `https://api.example.net/authors/${params.id}`;
+  }
+});
+
+store.addModel(author);
+```
+
+It is important to notice in the example above, how `lazyLoad` must be set to `true` and how the retrieve function returns a URL based on an input parameter. As always, the operation function can return a URL (DataFlux will download the objects) or directly a collection of objects.
+
+> If you don't specify the insert/update/delete operation functions, the same URL of the retrieve function will be used.
+
+Once the parametric retrieve function is declared, you can instantiate the objects with the `store.factory()` method:
+
+```js
+store.factory("author", {id: 4});
+```
+Invoking `store.factory()` will create a new object in the "author" collection.
+
+> store.factory() will not return the object. It just inserts the object in the collection. You will need to use any of the usual .find/.findOne/.findAll/.subscribe to retrieve it.
+
 
 #### Object enrichment
 
@@ -526,13 +579,13 @@ You can operate on the reviews similarly to how you operate on the main model's 
 
 ```js
 store.find("book")
-      .then(([book]) => {
-        const firstReview = book.reviews[0];
+        .then(([book]) => {
+          const firstReview = book.reviews[0];
 
-        // Examples of what you can do:
-        firstReview.detroy(); // The first review is removed from the array book.reviews
-        firstReview.set("stars", 5); // Set the stars of the first review to 5
-      });
+          // Examples of what you can do:
+          firstReview.detroy(); // The first review is removed from the array book.reviews
+          firstReview.set("stars", 5); // Set the stars of the first review to 5
+        });
 ```
 
 

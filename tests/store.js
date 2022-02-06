@@ -53,6 +53,7 @@ const createTestStore  = (options) => {
         retrieve: () => apiAnswer(null, authorsFile)
     });
 
+
     store.addModel(book);
     store.addModel(author);
     store.addModel(author2);

@@ -4,18 +4,6 @@ import axios from "axios";
 import {setValues} from "./BasicObj";
 import SubObj from "./SubObj";
 
-const applyData = (obj, data) => {
-    for (let att in data) {
-        if (att !== "id" || obj.id === undefined || (att === "id" && obj.id === data.id)) {
-            obj[att] = data[att];
-        } else {
-            return Promise.reject("The loading function cannot change the id of the object.")
-        }
-    }
-
-    return Promise.resolve(obj);
-};
-
 export default class Model {
     #type;
     #store;
@@ -35,7 +23,8 @@ export default class Model {
         this.options = {
             ...options,
             deep: options.deep ?? true,
-            parseMoment: options.parseMoment ?? false
+            parseMoment: options.parseMoment ?? false,
+            lazyLoad: options.lazyLoad
         };
         this.#store = null;
         this.#includes = {};
@@ -171,6 +160,7 @@ export default class Model {
                     return [data];
                 }
             });
+
     };
 
     insertObjects = (objects) => {
@@ -183,6 +173,14 @@ export default class Model {
 
     deleteObjects = (objects) => {
         return objects.length ? this.#bulkOperation(objects, this.#deleteObjects) : Promise.resolve();
+    };
+
+    factory = (params) => {
+        if (!this.options.lazyLoad) {
+            return Promise.reject("Factory can be used only on a model declared with lazyLoad: true");
+        } else {
+            return executeHook("retrieve", this.#retrieveHook, params, this.#axios);
+        }
     };
 
     #addRelationByField = (model, localField, remoteField="id") => {
