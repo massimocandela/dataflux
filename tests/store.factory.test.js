@@ -147,4 +147,27 @@ describe("Model factory", function() {
         store.factory("author3", {id: 1});
 
     }).timeout(10000);
+
+    it("value from string", function (done) {
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+        const author3 = new Model("author3", {
+            retrieve: () => {
+                return ["test1", "test2"]
+            }
+        });
+
+        store.addModel(author3);
+        store.find("author3")
+            .then(([author]) => {
+                const current = JSON.stringify(author.toJSON());
+                const expected = JSON.stringify({value: [ 'test1', 'test2' ]});
+                expect(current).to.equals(expected);
+                done();
+            });
+
+    }).timeout(10000);
 });

@@ -177,12 +177,11 @@ export default class Model {
     retrieveAll = () => {
         return executeHook("retrieve", this.#retrieveHook, null, this.#axios)
             .then(data => {
-                if (Array.isArray(data)) {
-                    return data;
-                } else {
+                if (!Array.isArray(data)) {
                     this.#singleItemQuery = true;
-                    return [data];
                 }
+
+                return this.#toArray(data);
             });
 
     };
@@ -240,9 +239,17 @@ export default class Model {
 
     #toArray = (data) => {
         if (Array.isArray(data)) {
-            return data;
+            if (data.every(str => ["string", "number"].includes(typeof(str)))) {
+                return [{value: data}];
+            } else {
+                return data;
+            }
         } else {
-            return [data];
+            if (["string", "number"].includes(typeof(data))) {
+                return [{value: data}];
+            } else {
+                return [data];
+            }
         }
     };
 
