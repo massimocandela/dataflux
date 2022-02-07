@@ -20,7 +20,7 @@ npm install dataflux
 
 Using jsDelivr CDN:
 ```html
-<script src="https://cdn.jsdelivr.net/npm/dataflux/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dataflux/dist/dataflux.min.js"></script>
 ```
 
 ## Examples
@@ -31,7 +31,7 @@ Consider the following hypothetical store/model declaration common to all the ex
 
 ```js
 // Content of your store.js
-import {Store, Model} from "dataflux";
+const {Store, Model} = require("dataflux");
 
 // We create a new Store
 const store = new Store();
@@ -205,8 +205,8 @@ class MyComponent extends React.Component {
     // Get all books with a price < 20
     store.findAll("book", "books", this, ({price}) => price < 20);
     // An attribute "books" will be added/updated in the 
-    // state (the rest of the state remains unchanged) every time
-    // a book in our selection is inserted/deleted/edited.
+    // state every time a book in our selection is inserted/deleted/edited,
+    // the rest of the state remains unchanged.
 
     // findAll is a syntactic sugar for:
     // const callback = (books) => {this.setState({...this.state, books})};

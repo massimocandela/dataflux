@@ -7,7 +7,10 @@
   "scripts": {
     "babel": "node_modules/.bin/babel",
     "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register --exit",
-    "compile": "rm -rf dist/ && ./node_modules/.bin/babel src -d dist",
+    "compile": "rm -rf dist/ && mkdir -p dist/compiled && ./node_modules/.bin/babel src -d dist/compiled",
+    "browserify": "rm -rf dist/browserified && mkdir -p dist/browserified && ./node_modules/.bin/browserify -r ./dist/compiled/index.js:dataflux  > ./dist/browserified/dataflux.js",
+    "minify": "rm -rf dist/minified && mkdir -p dist/minified && cat dist/compiled/* | ./node_modules/.bin/uglifyjs --source-map url=index.min.js.map -o dist/minified/index.min.js && cat ./dist/browserified/dataflux.js | uglifyjs --source-map url=dataflux.min.js.map -o dist/minified/dataflux.min.js",
+    "build": "npm run compile && npm run browserify && npm run minify && mv ./dist/minified/* ./dist/ && rm -r dist/browserified/ dist/compiled/ dist/minified/",
     "release": "dotenv release-it"
   },
   "author": {
@@ -35,7 +38,7 @@
         "npm ci"
       ],
       "after:bump": [
-        "npm run compile"
+        "npm run build"
       ],
       "after:release": [
         "echo Successfully released ${name} v${version} to ${repo.repository}.",
@@ -86,11 +89,13 @@
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
+    "browserify": "^17.0.0",
     "chai": "^4.3.6",
     "chai-subset": "^1.6.0",
     "dotenv-cli": "^4.1.1",
     "mocha": "^9.2.0",
-    "release-it": "^14.12.4"
+    "release-it": "^14.12.4",
+    "uglify-js": "^3.15.1"
   },
   "dependencies": {
     "axios": "^0.25.0",

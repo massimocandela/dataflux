@@ -98,7 +98,7 @@ export default class Model {
                     throw new Error("You cannot perform load() on an unsaved object.");
                 })
                 .then(() => {
-                    const res = this.#loadFunction(obj.toJSON());
+                    const res = this.#loadFunction(obj.toJSON()); // toJSON to avoid side effects;
 
                     if (typeof(res) === "string") {
                         return this.#axios({
