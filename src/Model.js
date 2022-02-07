@@ -183,7 +183,6 @@ export default class Model {
 
                 return this.#toArray(data);
             });
-
     };
 
     insertObjects = (objects) => {
@@ -202,7 +201,14 @@ export default class Model {
         if (!this.options.lazyLoad) {
             return Promise.reject("Factory can be used only on a model declared with lazyLoad: true");
         } else {
-            return executeHook("retrieve", this.#retrieveHook, params, this.#axios);
+            return executeHook("retrieve", this.#retrieveHook, params, this.#axios)
+                .then(data => {
+                    if (!Array.isArray(data)) {
+                        this.#singleItemQuery = true;
+                    }
+
+                    return this.#toArray(data);
+                });
         }
     };
 
@@ -253,18 +259,27 @@ export default class Model {
         }
     };
 
+    #unWrap = (data) => {
+        if (Array.isArray(data) && data.length === 1 &&
+            Object.keys(data[0].toJSON()).length === 1 && Object.keys(data[0].toJSON()).value) {
+            return data[0].value;
+        } else {
+            return data;
+        }
+    };
+
     #insertObjects = (data) => {
-        return executeHook("insert", this.#insertHook, data, this.#axios)
+        return executeHook("insert", this.#insertHook, this.#unWrap(data), this.#axios)
             .then(this.#toArray);
     };
 
     #updateObjects = (data) => {
-        return executeHook("update", this.#updateHook, data, this.#axios)
+        return executeHook("update", this.#updateHook, this.#unWrap(data), this.#axios)
             .then(this.#toArray);
     };
 
     #deleteObjects = (data) => {
-        return executeHook("delete", this.#deleteHook, data, this.#axios)
+        return executeHook("delete", this.#deleteHook, this.#unWrap(data), this.#axios)
             .then(this.#toArray);
     };
 

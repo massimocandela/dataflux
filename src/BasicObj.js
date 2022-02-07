@@ -28,6 +28,7 @@ import {v4 as uuidv4} from "uuid";
 export const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 
 export function setValues (values, model, SubObj, parent, context) {
+
     Object.keys(values)
         .forEach(key => {
             const value = values[key];
@@ -35,14 +36,15 @@ export function setValues (values, model, SubObj, parent, context) {
             if (model.options.parseMoment && value != null && dateRegex.test(value)) {
                 const mmnt = moment(value);
                 context[key] = mmnt.isValid() ? mmnt : value;
-            } else if (model.options.deep && value != null && typeof(value) === "object" && !Array.isArray(value)){
+            } else if (model.options.deep && value != null && typeof (value) === "object" && !Array.isArray(value)) {
                 context[key] = new SubObj(parent, key, value, model);
-            } else if (model.options.deep && value != null && Array.isArray(value) && !value.some(str => ["string", "number"].includes(typeof(str)))){
+            } else if (model.options.deep && value != null && Array.isArray(value) && !value.some(str => ["string", "number"].includes(typeof (str)))) {
                 context[key] = value.map(i => new SubObj(parent, key, i, model));
             } else {
                 context[key] = value;
             }
         });
+
 }
 
 export class BasicObj {
