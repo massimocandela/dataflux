@@ -182,7 +182,7 @@ const callback = ({book, author}) => {
   // Objects are ready
 };
 
-const subKey = store.multipleSubscribe(requests, callback); // Subscribe
+const subKey = store.multipleSubscribe(subscriptions, callback); // Subscribe
 
 store.unsubscribe(subKey); // Unsubscribe
 ```
