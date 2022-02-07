@@ -260,8 +260,9 @@ export default class Model {
     };
 
     #unWrap = (data) => {
-        if (Array.isArray(data) && data.length === 1 &&
-            Object.keys(data[0].toJSON()).length === 1 && Object.keys(data[0].toJSON()).value) {
+        if (data.value != null && Object.keys(data).length === 1) {
+            return data.value;
+        } else if (Array.isArray(data) && data.length === 1 && data[0].value != null && Object.keys(data[0]).length === 1) {
             return data[0].value;
         } else {
             return data;
