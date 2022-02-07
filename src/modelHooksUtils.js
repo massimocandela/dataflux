@@ -72,7 +72,20 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
                 };
             }
         case "function":
-            return (data)=> Promise.resolve(optionItem(data));
+            return (data) => {
+                const res = optionItem(data);
+
+                if (typeof(res) === "string") {
+                    return {
+                        method: defaultMethod,
+                        url: res,
+                        fields: options.fields || [],
+                        headers: options.headers || {}
+                    };
+                } else {
+                    return Promise.resolve(res);
+                }
+            }
         case "object":
             return {
                 method: optionItem.method || defaultMethod,
@@ -127,7 +140,12 @@ export const executeHook = (type, hook, data, axios) => {
             return getDataStringHook(hook, data, axios);
         case "function":
             const res = hook(data);
-            return typeof(res) === "string" ? getDataStringHook(res, data, axios) : res;
+
+            if (res.method && res.url && res.headers) {
+                return getDataStringHook(res, data, axios);
+            } else {
+                return res;
+            }
         default:
             return Promise.reject(`The ${type} hook must be a URL or a function returning a promise`);
     }

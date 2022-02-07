@@ -122,4 +122,29 @@ describe("Model factory", function() {
         store.save();
 
     }).timeout(10000);
+
+
+    it("factory url operation", function (done) {
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+        const axios = ({url}) => {
+            expect(url).to.equals("https://api.example.net/authors/1");
+            done();
+        };
+
+        const author3 = new Model("author3", {
+            lazyLoad: true,
+            axios,
+            retrieve: ({id}) => {
+                return `https://api.example.net/authors/${id}`
+            }
+        });
+
+        store.addModel(author3);
+        store.factory("author3", {id: 1});
+
+    }).timeout(10000);
 });

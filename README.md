@@ -392,10 +392,14 @@ To create a factory, you must declare a model as follows:
 ```js
 const author = new Model("author", {
   lazyLoad: true, // It MUST be lazyLoaded
-  retrieve: ({params}) => { // The retrieve function now takes some parameters
+  retrieve: (params) => { // The retrieve function now takes some parameters
 
-    // You can return a URL or directly one or more JSON objects
-    return `https://api.example.net/authors/${params.id}`;
+    if (params) {
+      // You can return a URL or directly one or more JSON objects
+      return `https://api.example.net/authors/${params.id}`
+    } else {
+      return Promise.resolve([]); // It's important to handle the base case where params is null
+    }
   }
 });
 

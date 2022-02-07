@@ -185,6 +185,18 @@ export default class Store {
             });
     };
 
+    factory (type, params) {
+        const item = this.models[type];
+        this.pubSub.publish("loading", {status: "start", model: type});
+        return item.promise = item.model.factory(params)
+            .then(items => {
+                for (let item of items) {
+                    this.#insertObject(type, item, false);
+                }
+                this.pubSub.publish("loading", {status: "end", model: type});
+            });
+    };
+
     #error (error) {
         error = error.message || error;
         this.pubSub.publish("error", error);
@@ -258,18 +270,4 @@ export default class Store {
                 this.pubSub.publish("loading", {status: "end", model: type});
             });
     };
-
-
-    factory (type, params) {
-        const item = this.models[type];
-        this.pubSub.publish("loading", {status: "start", model: type});
-        return item.promise = item.model.factory(params)
-            .then(items => {
-                for (let item of items) {
-                    this.#insertObject(type, item, false);
-                }
-                this.pubSub.publish("loading", {status: "end", model: type});
-            });
-    };
-
 }
