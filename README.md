@@ -234,6 +234,25 @@ The method `findAll` returns always an array. The method `findOne` returns a sin
 
 When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll()` injects the unsubscribe call inside `componentWillUnmount()`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe()` and `store.unsubscribe()` instead of `store.findAll()`, to avoid side effects when the component is unmounted.
 
+In case you prefer React hooks:
+
+```js
+function MyComponent() {
+  const [books, setBooks] = useState([]);
+
+  useEffect(() => {
+    const subKey = store.subscribe("books", setBooks, ({price}) => price < 20);
+
+    return () => {
+      store.unsubscribe(subKey); // Remember to unsubscribe
+    };
+  }, []);
+
+  return books.map(book => <Book onTitleChange={(title) => book.set("title", title)}/>);
+}
+```
+
+
 ## Configuration
 
 The store can be configured with the following options:
