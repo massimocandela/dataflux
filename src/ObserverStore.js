@@ -37,12 +37,13 @@ class ObserverStore extends PersistentStore {
 
     multipleSubscribe = (subscriptions, callback) => {
         const dataPayload = {};
+        const subKey = uuidv4();
 
         const areAllDone = () => {
             return subscriptions.map(([name]) => name).every(name => dataPayload[name] !== undefined);
         };
 
-        return Promise.all(subscriptions
+        Promise.all(subscriptions
             .map(sub  => {
                 const [name, filterFunction=null] = sub;
 
@@ -55,11 +56,12 @@ class ObserverStore extends PersistentStore {
                 return this.subscribe(name, wrappedCallback, filterFunction);
             }))
             .then(subKeys => {
-                const subKey = uuidv4();
                 this._multipleSubscribed[subKey] = subKeys;
 
                 return subKey;
             });
+
+        return subKey;
     };
 
     subscribe = (type, callback, filterFunction) => {

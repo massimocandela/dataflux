@@ -59,13 +59,12 @@ describe("Store subscribe", function() {
 
     }).timeout(10000);
 
-    it("object load enrichment", function (done) {
+    it("order subscribe unsubscribe", function (done) {
 
         const store = createTestStore({
             autoSave: false,
             lazyLoad: true
         });
-
 
         const pubKey1 = store.subscribe("book", () => {});
         const pubKey2 = store.subscribe("book", () => {});
@@ -84,6 +83,34 @@ describe("Store subscribe", function() {
             done();
         }, 5000);
 
-    }).timeout(20000);
+    }).timeout(10000);
+
+    it("order multiple subscribe unsubscribe", function (done) {
+
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+        const subscriptions = [
+            ["book"],
+            ["author"]
+        ];
+
+        const subKey1 = store.multipleSubscribe(subscriptions, ({book, author}) => {});
+
+        store.unsubscribe(subKey1);
+        const subKey2 = store.multipleSubscribe(subscriptions, ({book, author}) => {});
+        const subKey3 = store.multipleSubscribe(subscriptions, ({book, author}) => {});
+
+        store.unsubscribe(subKey2);
+        store.unsubscribe(subKey3);
+
+        setTimeout(() => {
+            expect(store._subscribed).to.deep.equal({ book: {}, author: {} });
+            done();
+        }, 5000);
+
+    }).timeout(10000);
 
 });
