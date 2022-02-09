@@ -59,4 +59,31 @@ describe("Store subscribe", function() {
 
     }).timeout(10000);
 
+    it("object load enrichment", function (done) {
+
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+
+        const pubKey1 = store.subscribe("book", () => {});
+        const pubKey2 = store.subscribe("book", () => {});
+
+        store.unsubscribe(pubKey1);
+        store.unsubscribe(pubKey2);
+
+        const pubKey3 = store.subscribe("book", () => {});
+        const pubKey4 = store.subscribe("book", () => {});
+
+        store.unsubscribe(pubKey3);
+        store.unsubscribe(pubKey4);
+
+        setTimeout(() => {
+            expect(store._subscribed["book"]).to.deep.equal({});
+            done();
+        }, 5000);
+
+    }).timeout(20000);
+
 });

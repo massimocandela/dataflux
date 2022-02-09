@@ -26,7 +26,9 @@ import { v4 as uuidv4 } from "uuid";
 import batchPromises from "batch-promises";
 import PersistentStore from "./PersistentStore";
 
-class ObserverStore extends PersistentStore{
+class ObserverStore extends PersistentStore {
+    #queryPromises = [];
+    #unsubPromises = [];
     constructor(options) {
         super(options);
         this._subscribed = {};
@@ -62,11 +64,9 @@ class ObserverStore extends PersistentStore{
 
     subscribe = (type, callback, filterFunction) => {
         const subKey = uuidv4();
-        if (!this._subscribed[type]) {
-            this._subscribed[type] = {};
-        }
+        this._subscribed[type] ??= {};
 
-        this.find(type, filterFunction)
+        const prom = this.find(type, filterFunction)
             .then(data => {
 
                 this.#subscribeToObjects(type, data, {
@@ -75,31 +75,39 @@ class ObserverStore extends PersistentStore{
                     subKey
                 });
 
-                return callback(data);
+                callback(data);
             });
+
+        this.#queryPromises.push(prom);
 
         return subKey;
     };
 
     unsubscribe = (key) => {
-        if (this._multipleSubscribed[key]){
-            for (let sub of this._multipleSubscribed[key]) {
-                this.unsubscribe(sub);
-            }
-            delete this._multipleSubscribed[key];
-        } else {
-            for (let type in this._subscribed) {
-                for (let id in this._subscribed[type]) {
-                    this._subscribed[type][id] = this._subscribed[type][id]
-                        .filter(i => {
-                            return i.subKey !== key
-                        });
+        if (this.#queryPromises.length) {
 
-                    if (this._subscribed[type][id].length === 0) {
-                        delete this._subscribed[type][id];
+            this.#unsubPromises = Promise.all(this.#queryPromises)
+                .then(() => {
+                    if (this._multipleSubscribed[key]) {
+                        for (let sub of this._multipleSubscribed[key]) {
+                            this.unsubscribe(sub);
+                        }
+                        delete this._multipleSubscribed[key];
+                    } else {
+                        for (let type in this._subscribed) {
+                            for (let id in this._subscribed[type]) {
+                                this._subscribed[type][id] = this._subscribed[type][id]
+                                    .filter(i => {
+                                        return i.subKey !== key
+                                    });
+
+                                if (this._subscribed[type][id].length === 0) {
+                                    delete this._subscribed[type][id];
+                                }
+                            }
+                        }
                     }
-                }
-            }
+                });
         }
     };
 
@@ -132,7 +140,7 @@ class ObserverStore extends PersistentStore{
             const subscribedToObject = typeChannel[objectId] || [];
 
             for (let sub of subscribedToObject) {
-                out[sub.subKey] = out[sub.subKey] || sub;
+                out[sub.subKey] ??= sub;
             }
         }
 
@@ -140,74 +148,76 @@ class ObserverStore extends PersistentStore{
     }
 
     #propagateChange = (objects=[]) => {
-        if (objects.length) {
-            const type = objects[0].getModel().getType();
-            const uniqueSubs = this.#getUniqueSubs(objects, type);
+        return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
+            .then(() => {
+                if (objects.length) {
+                    const type = objects[0].getModel().getType();
+                    const uniqueSubs = this.#getUniqueSubs(objects, type);
 
-            batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
-                return this.find(type, filterFunction).then(callback);
+                    batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
+                        return this.find(type, filterFunction).then(callback);
+                    });
+                }
+
+                return objects;
             });
-        }
-
-        return objects;
     };
 
     #subscribeToObjects = (type, objectsToSubscribe, item) => {
 
         for (let object of objectsToSubscribe) {
             const id = object.getId();
-            if (!this._subscribed[type][id]) {
-                this._subscribed[type][id] = [];
-            }
-
+            this._subscribed[type][id] ??= [];
             this._subscribed[type][id].push(item);
         }
 
     };
 
     #propagateInsertChange (type, newObjects) {
-        if (this._subscribed[type]) {
-            const uniqueSubs = {};
-            const objects = Object.values(this._subscribed[type]);
+        return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
+            .then(() => {
+                if (this._subscribed[type]) {
+                    const uniqueSubs = {};
+                    const objects = Object.values(this._subscribed[type]);
 
-            for (let object of objects) {
-                for (let sub of object) {
-                    if (!uniqueSubs[sub.subKey]) {
-                        uniqueSubs[sub.subKey] = sub;
-                    }
-                }
-            }
-
-            const possibleSubs = Object.values(uniqueSubs);
-
-            batchPromises(10, possibleSubs, ({callback, filterFunction}) => {
-
-                const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
-
-                if (objectsToSubscribe.length) { // Check if the new objects matter
-
-                    return this.find(type, filterFunction)
-                        .then(data => {
-                            let subKey;
-                            for (let d of data) {
-                                const item = this._subscribed[d.getModel().getType()][d.getId()];
-                                subKey = item ? item.subKey : null
-                                if (subKey) break;
+                    for (let object of objects) {
+                        for (let sub of object) {
+                            if (!uniqueSubs[sub.subKey]) {
+                                uniqueSubs[sub.subKey] = sub;
                             }
+                        }
+                    }
 
-                            this.#subscribeToObjects(type, objectsToSubscribe, {
-                                callback,
-                                filterFunction,
-                                subKey
-                            });
+                    const possibleSubs = Object.values(uniqueSubs);
 
-                            return data;
-                        })
-                        .then(callback);
+                    batchPromises(10, possibleSubs, ({callback, filterFunction}) => {
+
+                        const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
+
+                        if (objectsToSubscribe.length) { // Check if the new objects matter
+
+                            return this.find(type, filterFunction)
+                                .then(data => {
+                                    let subKey;
+                                    for (let d of data) {
+                                        const item = this._subscribed[d.getModel().getType()][d.getId()];
+                                        subKey = item ? item.subKey : null
+                                        if (subKey) break;
+                                    }
+
+                                    this.#subscribeToObjects(type, objectsToSubscribe, {
+                                        callback,
+                                        filterFunction,
+                                        subKey
+                                    });
+
+                                    return data;
+                                })
+                                .then(callback);
+                        }
+                    });
                 }
             });
-
-        }
     };
 
 }
