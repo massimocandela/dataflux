@@ -185,15 +185,15 @@ export default class Model {
     };
 
     insertObjects = (objects) => {
-        return objects.length ? this.#bulkOperation(objects, this.#insertObjects) : Promise.resolve();
+        return objects.length ? this.#insertObjects(objects) : Promise.resolve();
     };
 
     updateObjects = (objects) => {
-        return objects.length ? this.#bulkOperation(objects, this.#updateObjects) : Promise.resolve();
+        return objects.length ? this.#updateObjects(objects) : Promise.resolve();
     };
 
     deleteObjects = (objects) => {
-        return objects.length ? this.#bulkOperation(objects, this.#deleteObjects) : Promise.resolve();
+        return objects.length ? this.#deleteObjects(objects) : Promise.resolve();
     };
 
     factory = (params) => {
@@ -234,14 +234,6 @@ export default class Model {
         return json;
     };
 
-    #bulkOperation = (objects, action) => {
-        const parsed = objects.map(i => ({
-            target: i.getId(),
-            data: this.#removeHiddenFields(i.toJSON())
-        }));
-        return action(parsed);
-    };
-
     #toArray = (data) => {
         if (Array.isArray(data)) {
             if (data.length && data.every(str => ["string", "number"].includes(typeof(str)))) {
@@ -258,7 +250,8 @@ export default class Model {
         }
     };
 
-    #unWrap = (data) => {
+    #unWrap = (objects) => {
+        const data = Object.values(objects).map(object => this.#removeHiddenFields(object.toJSON()));
         if (data.value != null && Object.keys(data).length === 1) {
             return data.value;
         } else if (Array.isArray(data) && data.length === 1 && data[0].value != null && Object.keys(data[0]).length === 1) {
@@ -268,39 +261,64 @@ export default class Model {
         }
     };
 
-    #insertObjects = (data) => {
-        const targets = data.map(i => i.target);
-        const jsons = data.map(i => i.data);
-
-        return executeHook("insert", this.#insertHook, this.#unWrap(jsons), this.#axios)
+    #insertObjects = (objects) => {
+        const operation = "insert";
+        return executeHook(operation, this.#insertHook, this.#unWrap(objects), this.#axios)
             .catch(error => {
-                this.#removeFromStoreSilentlyAfterFailure(targets);
-                return Promise.reject({...(error?.response?.data || error), targets, operation: "insert" } );
+                this.#removeFromStoreSilentlyAfterFailure(objects);
+                return this.#hanldeApiError(error, objects, operation);
+            })
+            .then(data => {
+                this.#cleanApiError(objects);
+                return data;
             })
             .then(this.#toArray);
     };
 
-    #updateObjects = (data) => {
-        const targets = data.map(i => i.target);
-        const jsons = data.map(i => i.data);
-
-        return executeHook("update", this.#updateHook, this.#unWrap(data), this.#axios)
-            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "update" } ))
+    #updateObjects = (objects) => {
+        const operation = "update";
+        return executeHook(operation, this.#updateHook, this.#unWrap(objects), this.#axios)
+            .catch(error => this.#hanldeApiError(error, objects, operation))
+            .then(data => {
+                this.#cleanApiError(objects);
+                return data;
+            })
             .then(this.#toArray)
 
     };
 
-    #deleteObjects = (data) => {
-        const targets = data.map(i => i.target);
-        const jsons = data.map(i => i.data);
-
-        return executeHook("delete", this.#deleteHook, this.#unWrap(data), this.#axios)
-            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "delete" } ))
+    #deleteObjects = (objects) => {
+        const operation = "delete";
+        return executeHook(operation, this.#deleteHook, this.#unWrap(objects), this.#axios)
+            .catch(error => this.#hanldeApiError(error, objects, operation))
+            .then(data => {
+                this.#cleanApiError(objects);
+                return data;
+            })
             .then(this.#toArray);
     };
 
-    #removeFromStoreSilentlyAfterFailure = (targets) => {
-        for (let target of targets) {
+    #hanldeApiError = (error, objects, operation) => {
+        error = error?.response?.data ?? error;
+        const targets = objects.map(object => object.getId());
+
+        // Set errors
+        const strError = error?.message ?? error?.error ?? error;
+        Object.values(objects).map(object => object.setError(strError));
+
+        return Promise.reject({
+            ...error,
+            targets,
+            operation
+        });
+    };
+
+    #cleanApiError = (objects) => {
+        Object.values(objects).map(object => object.setError(false));
+    };
+
+    #removeFromStoreSilentlyAfterFailure = (objects) => {
+        for (let target of objects.map(object => object.getId())) {
             delete this.getStore().models[this.getType()].storedObjects[target];
         }
     };

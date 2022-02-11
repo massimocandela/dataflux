@@ -50,6 +50,7 @@ export function setValues (values, model, SubObj, parent, context) {
 export class BasicObj {
     #setHidden = {};
     #id = null;
+    #error = false;
     constructor(values, model) {};
 
     getId = () => {
@@ -78,6 +79,14 @@ export class BasicObj {
             this[attribute] = value;
         }
         return this.update();
+    };
+    
+    getError = () => {
+        return this.#error;
+    };
+    
+    setError = (error) => {
+        this.#error = error ?? false;
     };
 
     setConstant = (attribute, value) => {
