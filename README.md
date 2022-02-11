@@ -308,9 +308,22 @@ An operation object is an object like follows:
 {
   "method": "get",
   "url": "https://api.example.com",
-  "headers": {"Authorization": "bearer XXXX"}
+  "headers": {
+    "Authorization": "bearer XXXX"
+  },
+  "batch": false
 }
 ```
+
+Possible parameters are:
+
+| Parameter | Description                                                                                                                          | Default                                                                          |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| method    | HTTP method, accepted are get,post,put, and delete                                                                                   | "get" for retrieve, "post" for insert, "put" for update, and "delete" for delete |
+| url       | The url of the api                                                                                                                   |                                                                                  |
+| headers   | Headers for the HTTP request ([list](https://en.wikipedia.org/wiki/List_of_HTTP_header_fields)).                                     |
+| batch     | A boolean declaring if the API is able to receive an array of objects or an object at a time. This is not applicable for `retrieve`. | false                                                                            |
+
 
 Usage example:
 
