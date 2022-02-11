@@ -235,7 +235,11 @@ export default class Model {
     };
 
     #bulkOperation = (objects, action) => {
-        return action(objects.map(i => this.#removeHiddenFields(i.toJSON())));
+        const parsed = objects.map(i => ({
+            target: i.getId(),
+            data: this.#removeHiddenFields(i.toJSON())
+        }));
+        return action(parsed);
     };
 
     #toArray = (data) => {
@@ -265,17 +269,30 @@ export default class Model {
     };
 
     #insertObjects = (data) => {
-        return executeHook("insert", this.#insertHook, this.#unWrap(data), this.#axios)
+        const targets = data.map(i => i.target);
+        const jsons = data.map(i => i.data);
+
+        return executeHook("insert", this.#insertHook, this.#unWrap(jsons), this.#axios)
+            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "insert" } ))
             .then(this.#toArray);
     };
 
     #updateObjects = (data) => {
+        const targets = data.map(i => i.target);
+        const jsons = data.map(i => i.data);
+
         return executeHook("update", this.#updateHook, this.#unWrap(data), this.#axios)
-            .then(this.#toArray);
+            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "update" } ))
+            .then(this.#toArray)
+
     };
 
     #deleteObjects = (data) => {
+        const targets = data.map(i => i.target);
+        const jsons = data.map(i => i.data);
+
         return executeHook("delete", this.#deleteHook, this.#unWrap(data), this.#axios)
+            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "delete" } ))
             .then(this.#toArray);
     };
 
