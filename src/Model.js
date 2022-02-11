@@ -273,7 +273,10 @@ export default class Model {
         const jsons = data.map(i => i.data);
 
         return executeHook("insert", this.#insertHook, this.#unWrap(jsons), this.#axios)
-            .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "insert" } ))
+            .catch(error => {
+                this.#removeFromStoreSilentlyAfterFailure(targets);
+                return Promise.reject({...(error?.response?.data || error), targets, operation: "insert" } );
+            })
             .then(this.#toArray);
     };
 
@@ -294,6 +297,12 @@ export default class Model {
         return executeHook("delete", this.#deleteHook, this.#unWrap(data), this.#axios)
             .catch(error => Promise.reject({...(error?.response?.data || error), targets, operation: "delete" } ))
             .then(this.#toArray);
+    };
+
+    #removeFromStoreSilentlyAfterFailure = (targets) => {
+        for (let target of targets) {
+            delete this.getStore().models[this.getType()].storedObjects[target];
+        }
     };
 
 }
