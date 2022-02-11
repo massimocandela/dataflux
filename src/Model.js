@@ -23,7 +23,6 @@
  */
 
 import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUtils";
-import batchPromises from "batch-promises";
 import axios from "axios";
 import {setValues} from "./BasicObj";
 import SubObj from "./SubObj";
@@ -236,16 +235,12 @@ export default class Model {
     };
 
     #bulkOperation = (objects, action) => {
-        if (this.#singleItemQuery) {
-            return batchPromises(this.#batchSize, objects.map(i => this.#removeHiddenFields(i.toJSON())), action);
-        } else {
-            return action(objects.map(i => this.#removeHiddenFields(i.toJSON())));
-        }
+        return action(objects.map(i => this.#removeHiddenFields(i.toJSON())));
     };
 
     #toArray = (data) => {
         if (Array.isArray(data)) {
-            if (data.every(str => ["string", "number"].includes(typeof(str)))) {
+            if (data.length && data.every(str => ["string", "number"].includes(typeof(str)))) {
                 return [{value: data}];
             } else {
                 return data;

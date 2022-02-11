@@ -23,13 +23,14 @@
  */
 
 import brembo from "brembo";
+import batchPromises from "batch-promises";
 
 const getDataStringHook = (hook, data=null, axios) => {
 
+    const batch = hook.batch ?? false;
     const options = {
         url: hook.url,
-        method: hook.method || "get",
-        data,
+        method: (hook.method || "get").toLowerCase(),
         reponseType: 'json'
     };
 
@@ -41,8 +42,26 @@ const getDataStringHook = (hook, data=null, axios) => {
         setFields(options, hook);
     }
 
-    return axios(options)
-        .then(data => data.data);
+    if (options.method === "get") {
+        return axios(options)
+            .then(data => data.data);
+    } else if (batch) {
+        return axios({
+            ...options,
+            data
+        })
+            .then(data => data.data);
+    } else {
+        const out = [];
+        return batchPromises(4, data, item => {
+            return axios({
+                ...options,
+                data: item
+            })
+                .then(data => out.push(data.data));
+        });
+    }
+
 };
 
 const setFields = (options, hook) => {
