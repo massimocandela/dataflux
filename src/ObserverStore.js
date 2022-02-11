@@ -128,6 +128,16 @@ class ObserverStore extends PersistentStore {
             });
     };
 
+    mock(type, objects) {
+        objects = Array.isArray(objects) ? objects : [objects];
+        return super.mock(type, objects)
+            .then(objects => {
+                this.#propagateInsertChange(type, objects);
+
+                return objects;
+            });
+    };
+
     delete(typeOrObjects, filterFunction) {
         return super.delete(typeOrObjects, filterFunction)
             .then(this.#propagateChange);

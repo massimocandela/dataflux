@@ -94,6 +94,10 @@ export default class PersistentStore extends Store{
             });
     };
 
+    mock(type, objects) {
+        return super.mock(type, objects);
+    };
+
     delete(typeOrObjects, filterFunction) {
         return super.delete(typeOrObjects, filterFunction)
             .then(data => {

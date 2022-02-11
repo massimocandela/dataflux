@@ -553,13 +553,39 @@ The store has the following method.
 | find(type, filterFunction)                             | The promise-oriented method to access objects given a type and a filter function. If the filter function is missing, all the objects are returned. See [example 1](#example-1).                                                                                                                                                                                                                                                                     |
 | delete(objects)                                        | It deletes an array of objects. See [example 1](#example-3).                                                                                                                                                                                                                                                                                                                                                                                        |
 | delete(type, filterFunction)                           | It deleted objects given an array and a filter function. See [example 1](#example-3).                                                                                                                                                                                                                                                                                                                                                               |
-| insert(type, object)                                   | It creates a new object of a given type and inserts it in the store.                                                                                                                                                                                                                                                                                                                                                                                |
+| insert(type, object)                                   | It creates a new object of a given type and inserts it in the store. The object inserted MUST be ready to be persisted, read `mock()` below.                                                                                                                                                                                                                                                                                                        |
+| mock(type, object)                                     | It creates a mock object of a given type and inserts it in the store. The mock object behaves exactly like a real object, except that it is not persisted (sent to the API) as long as you don't call `object.insert()`. This is useful when you want to create an object but you need to be able to change some properties before to send it to the API. Read [insert vs. mock](#insert-vs-mock).                                                  |
 | subscribe(type, callback, filterFunction)              | The callback-oriented method to access objects given a type and a filter function. It returns the key of the subscription, needed to unsubscribe. If the filter function is missing, all the objects are returned. **DataFlux remembers your query and calls the callback every time any change is affecting the result of your query.** See [example 5](#example-5---observability).                                                               |
 | multipleSubscribe(subscriptions, callback)             | A method to subscribe to multiple models. The first parameter is an array of models' names and filterFunctions, the second parameter is the callback to be called when the cumulative dataset is ready. E.g., `multipleSubscribe([["book", filterFunction1], ["author", filterFunction2]], callback)`. It returns the key of the subscription. See [example 5](#example-5---observability).                                                         |
 | unsubscribe(key)                                       | Method to terminate a subscription given a subscription key. See [example 5](#example-5---observability).                                                                                                                                                                                                                                                                                                                                           |
 | findOne(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. If multiple objects satisfy the query, only the first is selected. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. See [example 6](#example-6---observability--react).                                  |
 | findAll(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. If the filter function is missing, all the objects are returned. See [example 6](#example-6---observability--react).                                    |
 | preload(type)                                          | This method allows to preLoad all objects of a given model. If you initialize the store with `lazyLoad:true`, the objects of a model are retrieved from the API at the first query performed on that model (e.g., at the first `.find()`). However, sometimes you may want to speed up the first query by pre loading the objects of a specific model while keeping `lazyLoad:true` on the store; in such a case you can use `store.preload(type)`. |
+
+### Insert vs. Mock
+
+If you do:
+```js
+store.insert("book", {title: "The little prince"});
+```
+when the store will try to save, the object `{title: "The little prince"}` will be sent to the API in a post request. However, the API may require an attribute "price" for each book object, hence the post request will fail.
+Of course, you can add the attribute directly in the `.insert()` call; however, the value of this attribute may not be known at that time. For example, the user may need to input the price in a text field.
+
+You may think to delay the `.insert()` up to when all the required attributes are available; however, **this is a bad idea**, because as long as the object is not in the store, you will not benefit from the observability provided by DataFlux. _E.g., your React state will not update automatically and you will need to handle the changes triggered by the input fields yourself_ ([reinventing the wheel](https://en.wikipedia.org/wiki/Reinventing_the_wheel)).
+
+Solution, use `.mock()` to create a mock object:
+
+```js
+store.mock("book", {title: "The little prince"});
+```
+
+The mock object behaves exactly like a normal object: you can retrieve it with `.find`/`.findAll`/`.findOne`/`.subscribe`.
+
+However, the mock object is not sent to the API as long as you don't call `.insert()` on the object itself. When you call `.insert()`, the mock object is promoted to real object.
+
+> Warning: to promote a mock object, you need to call `object.insert()` on the object itself (you must first retrieve it) and NOT `store.insert()`.
+
+
 
 ## Store events
 The store emits the following events:

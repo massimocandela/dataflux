@@ -25,6 +25,8 @@
 import Obj from "./Obj";
 import PubSub from "./PubSub";
 
+const objectStatuses = ["new", "old", "mock", "deleted"];
+
 export default class Store {
     constructor(options={}) {
         this.options = {
@@ -101,7 +103,12 @@ export default class Store {
 
     insert (type, objects) {
         return this.#getPromise(type)
-            .then(() => objects.map(object => this.#insertObject(type, object, true)));
+            .then(() => objects.map(object => this.#insertObject(type, object, "new")));
+    };
+
+    mock (type, objects) {
+        return this.#getPromise(type)
+            .then(() => objects.map(object => this.#insertObject(type, object, "mock")));
     };
 
     get (type, id) {
@@ -176,9 +183,9 @@ export default class Store {
                         inserted.push(object);
                     } else if (object.status === "deleted") {
                         deleted.push(object);
-                    } else if (this.hasChanged(type, object.object)) {
+                    } else if (object.status === "old" && this.hasChanged(type, object.object)) {
                         updated.push(object);
-                    }
+                    } // Noithing for mock objects
                 }
 
                 return { inserted, updated, deleted };
@@ -191,7 +198,7 @@ export default class Store {
         return item.promise = item.model.factory(params)
             .then(items => {
                 for (let item of items) {
-                    this.#insertObject(type, item, false);
+                    this.#insertObject(type, item, "old");
                 }
                 this.pubSub.publish("loading", {status: "end", model: type});
             });
@@ -240,7 +247,7 @@ export default class Store {
         }
     };
 
-    #insertObject (type, item, markAsNew=false) {
+    #insertObject (type, item, status) {
         const model = this.models[type].model;
         const wrapper = new Obj(item, model);
         const id = wrapper.getId();
@@ -248,11 +255,24 @@ export default class Store {
         if (this.models[type].storedObjects[id]) {
             throw new Error(`The IDs provided for the model ${type} are not unique`);
         }
+
+        if (!objectStatuses.includes(status)) {
+            throw new Error(`The provided status is not valid`);
+        }
+        
+        if (status === "mock") {
+            wrapper.insert = () => {
+                this.models[type].storedObjects[id].status = "new";
+                this.update([wrapper]);
+                delete wrapper.insert;
+            };
+        }
+
         this.models[type].storedObjects[id] = {
             id,
             fingerprint: wrapper.getFingerprint(),
             object: wrapper,
-            status: markAsNew ? "new" : "old"
+            status
         }
 
         return wrapper;
@@ -265,7 +285,7 @@ export default class Store {
         return item.promise = item.model.retrieveAll()
             .then(items => {
                 for (let item of items) {
-                    this.#insertObject(type, item, false);
+                    this.#insertObject(type, item, "old");
                 }
                 this.pubSub.publish("loading", {status: "end", model: type});
             });
