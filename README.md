@@ -718,6 +718,15 @@ class MyComponent extends React.Component {
 
 
 ## Editing objects
+
+The preferred method to edit objects is using the `.set()` method that each object has, instead of editing directly the attributes.  However, there are a few notions to keep in mind.
+
+#### Client-side object validaion will not work when editing attributes directly.
+
+You will be able to validate objects only if you use `.set()`. If you edit directly the attribute (e.g., `book.title = "test"`) errors will be discovered only by the API.
+
+#### Auto save may not work when editing attributes directly.
+
 The option `autoSave` can be `true`, `false`, or a number (milliseconds).
 
 * When `autoSave` is set to `false`, the following operations are equivalent:
