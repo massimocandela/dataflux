@@ -105,6 +105,7 @@ describe("Store refresh", function () {
     it("refresh - autoRefresh", function (done) {
 
         let content = [{id: 1}, {id: 2}];
+        let once = true;
 
         const store = new Store({
             autoSave: true,
@@ -122,7 +123,8 @@ describe("Store refresh", function () {
             });
 
         store.on("refresh", ({status}) => {
-            if (status === "end") {
+            if (once && status === "end") {
+                once = false;
                 store.find("test")
                     .then((data) => {
                         expect(data.map(i => i.toJSON())).to.deep
