@@ -140,6 +140,7 @@ export default class Store {
     };
 
     applyDiff ({inserted=[], updated=[], deleted=[]}, type) {
+        // console.log(inserted, updated, deleted);
         return new Promise((resolve, reject) => {
             try {
 
@@ -155,7 +156,7 @@ export default class Store {
 
                 resolve();
             } catch(error) {
-                return reject(error);
+                reject(error);
             }
         });
     };
@@ -163,12 +164,27 @@ export default class Store {
     hasChanged (type, object) {
         const obj = this.models[type].storedObjects[object.getId()];
 
-        return obj.fingerprint !== obj.object.getFingerprint()
+        return obj.fingerprint !== obj.object.getFingerprint();
     };
 
     preload(type){
         return this.#getPromise(type);
     }
+
+    _swapIds = (type, oldId, newId) => {
+        const item = this.models[type].storedObjects[oldId];
+
+        // item.object.setId(newId);
+        delete item.object.getId;
+
+        this.models[type].storedObjects[newId] = {
+            ...item,
+            id: newId,
+            fingerprint: item.object.getFingerprint()
+        };
+
+        delete this.models[type].storedObjects[oldId];
+    };
 
     getDiff (type) {
         return this.#getPromise(type)
@@ -186,7 +202,7 @@ export default class Store {
                         deleted.push(object);
                     } else if (object.status === "old" && this.hasChanged(type, object.object)) {
                         updated.push(object);
-                    } // Noithing for mock objects
+                    } // Nothing for mock objects
                 }
 
                 return { inserted, updated, deleted };

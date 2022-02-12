@@ -51,10 +51,14 @@ export class BasicObj {
     #setHidden = {};
     #id = null;
     #error = false;
-    constructor(values, model) {};
+    #model;
+    constructor(values, model) {
+        this.#model = model;
+    };
 
     setId = (id) => {
         this.#id = id;
+        this.#model.getStore().models[this.#model.getType()].storedObjects
     };
 
     getId = () => {

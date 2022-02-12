@@ -44,10 +44,11 @@ describe("AutoSave", function() {
                         expect(JSON.stringify(data.map(i => i.toJSON()))).to.equals(JSON.stringify([{id: 1}, {id: 2}]));
 
                         store.insert("book", {id: 3});
-                        store.find("book").then(data => {
-                            data[0].set("title", "ciao");
-                            store.delete([data[1]]);
-                        });
+                        store.find("book")
+                            .then(data => {
+                                data[0].set("title", "ciao");
+                                store.delete([data[1]]);
+                            });
 
                         store.on("save", (status) => {
                             if (status === "end"){

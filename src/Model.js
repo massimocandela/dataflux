@@ -266,8 +266,9 @@ export default class Model {
         const operation = "insert";
         return executeHook(operation, this.#insertHook, this.#unWrap(objects), this.#axios)
             .then(data => {
-                this.#assignId(data, objects);
+                if (data) this.#assignId(data, objects);
                 this.#cleanApiError(objects);
+
                 return data;
             })
             .then(this.#toArray)
@@ -279,34 +280,33 @@ export default class Model {
 
     #assignId = (data, objects) => {
         if (data.length === 1) {
-            const id = data[0].id;
-            objects[0].id = id;
-            objects[0].setId(id);
-            delete objects[0].setId;
+            const newId = data[0].id;
+            const oldId = objects[0].getId();
+
+            this.getStore()._swapIds(this.getType(), oldId, newId);
         }
     };
 
     #updateObjects = (objects) => {
         const operation = "update";
         return executeHook(operation, this.#updateHook, this.#unWrap(objects), this.#axios)
-            .catch(error => this.#hanldeApiError(error, objects, operation))
             .then(data => {
                 this.#cleanApiError(objects);
                 return data;
             })
             .then(this.#toArray)
-
+            .catch(error => this.#hanldeApiError(error, objects, operation));
     };
 
     #deleteObjects = (objects) => {
         const operation = "delete";
         return executeHook(operation, this.#deleteHook, this.#unWrap(objects), this.#axios)
-            .catch(error => this.#hanldeApiError(error, objects, operation))
             .then(data => {
                 this.#cleanApiError(objects);
                 return data;
             })
-            .then(this.#toArray);
+            .then(this.#toArray)
+            .catch(error => this.#hanldeApiError(error, objects, operation));
     };
 
     #hanldeApiError = (error, objects, operation) => {
