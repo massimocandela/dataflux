@@ -41,7 +41,12 @@ const createTestStore  = (options) => {
         fields: bookFields,
         hiddenFields: [],
         load: (obj) => loadAnswer(obj.isbn, booksFile),
-        retrieve: () => apiAnswer(bookFields, booksFile)
+        retrieve: () => apiAnswer(bookFields, booksFile),
+        insert: ([data]) => {
+            data.id = 34;
+
+            return [data];
+        }
     });
 
     const author = new Model("author", {

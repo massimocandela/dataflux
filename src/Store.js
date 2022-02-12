@@ -24,6 +24,7 @@
 
 import Obj from "./Obj";
 import PubSub from "./PubSub";
+import batchPromises from "batch-promises";
 
 const objectStatuses = ["new", "old", "mock", "deleted"];
 
@@ -195,13 +196,83 @@ export default class Store {
     factory (type, params) {
         const item = this.models[type];
         this.pubSub.publish("loading", {status: "start", model: type});
-        return item.promise = item.model.factory(params)
+        item.promise = item.model.factory(params)
             .then(items => {
                 for (let item of items) {
                     this.#insertObject(type, item, "old");
                 }
                 this.pubSub.publish("loading", {status: "end", model: type});
             });
+
+        return item.promise;
+    };
+
+    refresh = () => {
+        return Promise.all(Object.keys(this.models).map(this.#refreshObjectByType));
+    };
+
+    #refreshObjectByType = (type) => {
+        const item = this.models[type];
+
+        this.pubSub.publish("refresh", {status: "start", model: type});
+
+        item.promise = item.model.retrieveAll()
+            .catch(() => {
+                const objects = this.models[type].storedObjects;
+                let list = [];
+
+                return batchPromises(4, objects, object => {
+                    item.model
+                        .factory(object)
+                        .then(items => {
+                            list = list.concat(items);
+                        });
+                })
+                    .then(() => list);
+            })
+            .then(objects => {
+
+                for (let object of objects) {
+
+                    const wrapper = new Obj(object, item.model);
+                    const id = wrapper.getId();
+                    const currentObject = item?.storedObjects[id];
+
+                    // console.log("currentObject", item);
+
+                    if (currentObject) {
+
+                        const newFingerprint = wrapper.getFingerprint();
+                        const oldFingerprint = currentObject.fingerprint;
+
+                        if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
+                            if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
+
+                                // Nothing for now
+
+                            } else { // Update with the new object
+                                // console.log("merge", wrapper);
+
+                                this.#merge(this.models[type].storedObjects[id].object, wrapper.toJSON())
+                                this.models[type].storedObjects[id].fingerprint = newFingerprint;
+                            }
+                        }
+
+                    } else {
+                        this.#insertObject(type, object, "old");
+                    }
+                }
+                this.pubSub.publish("refresh", {status: "end", model: type});
+            });
+
+        return item.promise;
+    };
+
+    #merge = (originalObject, newObject) => {
+        for (let key in newObject) {
+            originalObject[key] = newObject[key];
+        }
+        originalObject.update();
     };
 
     #error (error) {
@@ -259,7 +330,7 @@ export default class Store {
         if (!objectStatuses.includes(status)) {
             throw new Error(`The provided status is not valid`);
         }
-        
+
         if (status === "mock") {
             wrapper.insert = () => {
                 this.models[type].storedObjects[id].status = "new";
@@ -282,12 +353,14 @@ export default class Store {
         const item = this.models[type];
 
         this.pubSub.publish("loading", {status: "start", model: type});
-        return item.promise = item.model.retrieveAll()
+        item.promise = item.model.retrieveAll()
             .then(items => {
                 for (let item of items) {
                     this.#insertObject(type, item, "old");
                 }
                 this.pubSub.publish("loading", {status: "end", model: type});
             });
+
+        return item.promise;
     };
 }

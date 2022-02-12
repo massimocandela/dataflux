@@ -53,17 +53,22 @@ export class BasicObj {
     #error = false;
     constructor(values, model) {};
 
+    setId = (id) => {
+        this.#id = id;
+    };
+
     getId = () => {
         if (!this.#id) {
             if (this.id && (typeof (this.id) === "string" || typeof (this.id) === "number")) {
                 this.#id = this.id.toString();
+                delete this.setId;
             } else {
                 this.#id = uuidv4();
             }
         }
 
         return this.#id;
-    }
+    };
 
     get = (attribute, defaultValue) => {
         return this.#setHidden[attribute] ?? this[attribute] ?? defaultValue;

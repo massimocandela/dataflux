@@ -59,7 +59,8 @@ const getDataStringHook = (hook, data=null, axios) => {
                 data: item
             })
                 .then(data => out.push(data.data));
-        });
+        })
+            .then(() => out);
     }
 
 };

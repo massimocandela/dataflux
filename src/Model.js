@@ -26,6 +26,7 @@ import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUti
 import axios from "axios";
 import {setValues} from "./BasicObj";
 import SubObj from "./SubObj";
+import Obj from "./Obj";
 
 export default class Model {
     #type;
@@ -264,15 +265,25 @@ export default class Model {
     #insertObjects = (objects) => {
         const operation = "insert";
         return executeHook(operation, this.#insertHook, this.#unWrap(objects), this.#axios)
-            .catch(error => {
-                this.#removeFromStoreSilentlyAfterFailure(objects);
-                return this.#hanldeApiError(error, objects, operation);
-            })
             .then(data => {
+                this.#assignId(data, objects);
                 this.#cleanApiError(objects);
                 return data;
             })
-            .then(this.#toArray);
+            .then(this.#toArray)
+            .catch(error => {
+                this.#removeFromStoreSilentlyAfterFailure(objects);
+                return this.#hanldeApiError(error, objects, operation);
+            });
+    };
+
+    #assignId = (data, objects) => {
+        if (data.length === 1) {
+            const id = data[0].id;
+            objects[0].id = id;
+            objects[0].setId(id);
+            delete objects[0].setId;
+        }
     };
 
     #updateObjects = (objects) => {
