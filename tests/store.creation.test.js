@@ -1,6 +1,7 @@
 const chai = require("chai");
 const chaiSubset = require('chai-subset');
 const {Store, Model} = require("../src/index");
+const {expectedBooks} = require("./store");
 chai.use(chaiSubset);
 const expect = chai.expect;
 
@@ -148,4 +149,106 @@ describe("Store and models creation", function() {
 
     }).timeout(8000);
 
+
+    it("validation - no save", function (done) {
+
+        const store = new Store({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+        let updated = [];
+
+        const book = new Model("book", {
+            retrieve: () => {
+                return expectedBooks;
+            },
+            validate: {
+                isbn: ({isbn}) => {
+                    if (typeof(isbn) !== "number") {
+                        throw new Error("The isbn must be a number");
+                    }
+                }
+            }
+        });
+
+        store.addModel(book);
+
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+
+                first.set("isbn", "test");
+                expect(first.getError("isbn")).to.equals("The isbn must be a number"); // Specific error
+                expect(first.getError()).to.equals(false); // Generic API error
+
+                first.set("isbn", 123);
+                expect(first.getError("isbn")).to.equals(false);
+
+                done();
+            });
+
+    }).timeout(8000);
+
+    it("validation - save", function (done) {
+
+        const store = new Store({
+            autoSave: false,
+            lazyLoad: true
+        });
+
+        let updated = [];
+
+        const book = new Model("book", {
+            retrieve: () => {
+                return expectedBooks;
+            },
+            update: (data) => {
+                updated = data;
+            },
+            validate: {
+                isbn: ({isbn}) => {
+                    if (typeof(isbn) !== "number") {
+                        throw new Error("The isbn must be a number");
+                    }
+                }
+            }
+        });
+
+        store.addModel(book);
+
+        store.find("book")
+            .then(data => {
+                const first = data[0];
+                let once = true;
+
+                first.set("isbn", "test");
+
+                store.on("save", (status) => {
+                    if (status === "end") {
+                        if (once) {
+                            once = false;
+                            expect(updated).to.deep.equals([]);
+
+                            setTimeout(() => {
+                                first.set("isbn", 123);
+                                store.save();
+                            }, 10000)
+                        } else {
+                            expect(updated).to.deep.equals([{
+                                isbn: 123,
+                                title: 'Eloquent JavaScript, Third Edition',
+                                authorId: 0,
+                                pages: 472
+                            }
+                            ]);
+                            done();
+                        }
+                    }
+                });
+
+                store.save();
+            });
+
+    }).timeout(20000);
 });

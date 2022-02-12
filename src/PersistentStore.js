@@ -127,16 +127,21 @@ export default class PersistentStore extends Store{
     _saveDiff = (type, {inserted, updated, deleted}) => {
         const model = this.models[type].model;
 
+        // Validate objects
+        const correctInserted = inserted.filter(object => model.isObjectValid(object.object));
+        const correctUpdated = updated.filter(object => model.isObjectValid(object.object));
+        const correctDeleted = deleted.filter(object => model.isObjectValid(object.object));
+
         // Operations order:
         // 1) insert
         // 2) update
         // 3) delete
-        return model.insertObjects(inserted.map(i => i.object))
-            .then(() => this.applyDiff({inserted}, type))
-            .then(() => model.updateObjects(updated.map(i => i.object)))
-            .then(() => this.applyDiff({updated}, type))
-            .then(() => model.deleteObjects(deleted.map(i => i.object)))
-            .then(() => this.applyDiff({deleted}, type));
+        return model.insertObjects(correctInserted.map(i => i.object))
+            .then(() => this.applyDiff({inserted: correctInserted}, type))
+            .then(() => model.updateObjects(correctUpdated.map(i => i.object)))
+            .then(() => this.applyDiff({updated: correctUpdated}, type))
+            .then(() => model.deleteObjects(correctDeleted.map(i => i.object)))
+            .then(() => this.applyDiff({deleted: correctDeleted}, type));
     };
 
     _saveByType = (type) => {

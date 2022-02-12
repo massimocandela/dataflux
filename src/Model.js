@@ -26,7 +26,6 @@ import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUti
 import axios from "axios";
 import {setValues} from "./BasicObj";
 import SubObj from "./SubObj";
-import Obj from "./Obj";
 
 export default class Model {
     #type;
@@ -48,7 +47,8 @@ export default class Model {
             ...options,
             deep: options.deep ?? true,
             parseMoment: options.parseMoment ?? false,
-            lazyLoad: options.lazyLoad
+            lazyLoad: options.lazyLoad,
+            validate: options.validate ?? {}
         };
         this.#store = null;
         this.#includes = {};
@@ -74,6 +74,30 @@ export default class Model {
 
         this.#singleItemQuery = false; // By default use arrays
         this.#batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
+    };
+
+    validateObjectAttribute = (object, key) => {
+        const validate = this.options.validate;
+        if (validate && validate[key]) {
+            try {
+                validate[key](object);
+                object.setError(false, key);
+            } catch (error) {
+                object.setError(error.message, key);
+            }
+        }
+    };
+
+    isObjectValid = (object) => {
+        for (let key in object) {
+            if (typeof(object[key]) !== "function") {
+                if (object.getError(key)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     };
 
     getStore = () => {

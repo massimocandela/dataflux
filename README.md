@@ -297,6 +297,7 @@ All the possible options for a model creation are (they are all optional):
 | hiddenFields | An array of attribute names that will never be sent back to the API. E.g., if you set `hiddenFields: ["pages"]`, a book object can contain an attribute `pages` locally, but this will be stripped out in PUT/POST requests.                                                                                                                                                                                                                                                                                                                                                  |
 | deep         | A boolean defining if nested objects should be enriched with the object methods.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | true                 |
 | lazyLoad     | A boolean defining if the model should be lazy loaded on the first use. This takes precedence over the lazyLoad declared during store initialization.                                                                                                                                                                                                                                                                                                                                                                                                                         | false                |
+| validate     | A dictionary containing functions to validate the objects of this model. See [objects validation](#objects-validation)                                                                                                                                                                                                                                                                                                                                                                                                                                                        | no validation        |
 
 ### Operations
 As described in the table above, there are four possible operations: **retrieve, insert, update,** and **delete**. An operation can be defined as an operation object or a function.
@@ -603,23 +604,24 @@ The store emits the following events:
 Each object created is enriched with the following methods.
 
 
-| Method                             | Description                                                                                                                                                                                                                                                                                                                                                         |
-|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| getId()                            | It returns a unique ID used by the store to identify the object. The ID is unique inside a single model. Be aware, `object.id` and `objet.getId()` may return different values, since store's IDs can be different from the one of the REST API.                                                                                                                    |
-| set(attribute, value, hidden)      | A method to set an attribute to the object. It provides some advantages compared to doing `object.attribute = value`, these are discussed in [below](#editing-objects). The third parameter is optional, and when set to true will set the attribute as hidden (see [hiddenFields](#models-creation)).                                                              |
-| setConstant(attribute, value)      | A method to set an unmodifiable hidden attribute on the object. Setting the attribute as a constant will not propagate an update.                                                                                                                                                                                                                                   |
+| Method                             | Description                                                                                                                                                                                                                                                                                                                                                     |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| getId()                            | It returns a unique ID used by the store to identify the object. The ID is unique inside a single model. Be aware, `object.id` and `objet.getId()` may return different values, since store's IDs can be different from the one of the REST API.                                                                                                                |
+| set(attribute, value, hidden)      | A method to set an attribute to the object. It provides some advantages compared to doing `object.attribute = value`, these are discussed in [below](#editing-objects). The third parameter is optional, and when set to true will set the attribute as hidden (see [hiddenFields](#models-creation)).                                                          |
+| setConstant(attribute, value)      | A method to set an unmodifiable hidden attribute on the object. Setting the attribute as a constant will not propagate an update.                                                                                                                                                                                                                               |
 | get(attribute, defaultValue)       | Method to retrieve the value of an attribute. It does not provide any advantage compared to accessing directly the attribute (e.g., `author.name`); except for hidden fields and constants, which can be retrieved only with the `.get` method. Additionally, you can provide a default value as a second parameter in case the object doesn't have that attribute. |
-| getRelation(model, filterFunction) | To get all the objects respecting a specific relation with this object (see [model relations](#model-relations)).                                                                                                                                                                                                                                                   |
-| save()                             | Method to save the object. You can do `store.save()` instead.                                                                                                                                                                                                                                                                                                       |
-| destroy()                          | Method to delete the object. You can do `store.delete()` instead.                                                                                                                                                                                                                                                                                                   |
-| toJSON()                           | It returns a pure JSON representation of the object.                                                                                                                                                                                                                                                                                                                |
-| toString()                         | It returns a string representation of the object.                                                                                                                                                                                                                                                                                                                   |
-| getFingerprint()                   | It returns a hash of the object. The hash changes at every change of the object or of any nested object. Useful to detect object changes.                                                                                                                                                                                                                           |
-| getModel()                         | It returns the model of this object. Mostly useful to do `object.getModel().getType()` and obtain a string defining the type of the object.                                                                                                                                                                                                                         |
-| getError()                         | If an operation on an object triggers an error, this error can be retrieved with `getError()`. This allows to observe specific objects' errors, instead of the generic `store.on("error", ...)`.                                                                                                                                                                    |
-| setError(error)                    | Additionally to DataFlux's errors, you can trigger your own errors with this method. Other components observing this objet's error will be notified.                                                                                                                                                                                                                |
+| getRelation(model, filterFunction) | To get all the objects respecting a specific relation with this object (see [model relations](#model-relations)).                                                                                                                                                                                                                                               |
+| save()                             | Method to save the object. You can do `store.save()` instead.                                                                                                                                                                                                                                                                                                   |
+| destroy()                          | Method to delete the object. You can do `store.delete()` instead.                                                                                                                                                                                                                                                                                               |
+| toJSON()                           | It returns a pure JSON representation of the object.                                                                                                                                                                                                                                                                                                            |
+| toString()                         | It returns a string representation of the object.                                                                                                                                                                                                                                                                                                               |
+| getFingerprint()                   | It returns a hash of the object. The hash changes at every change of the object or of any nested object. Useful to detect object changes.                                                                                                                                                                                                                       |
+| getModel()                         | It returns the model of this object. Mostly useful to do `object.getModel().getType()` and obtain a string defining the type of the object.                                                                                                                                                                                                                     |
+| getError()                         | If an operation on an object triggers an error, this error can be retrieved with `getError()`. This allows to observe specific objects' errors, instead of the generic `store.on("error", ...)`.                                                                                                                                          |
+| getError(attributeName)            | This method allows you to check if the specificed attribute generated any error according to the validation property specified in the model. See [objects validation](#objects-validation).                                                                                                                                                                     | 
+| setError(error)                    | Additionally to DataFlux's errors, you can trigger your own errors with this method. Other components observing this objet's error will be notified.                                                                                                                                                                                                            |
 
-### Deeper Objects
+### Deep Objects
 When a model is declared with the option `deep: true` (default, see [model creation](#models-creation)), all the sub objects will also offer many of the methods above.
 
 Imagine the API returns:
@@ -655,6 +657,64 @@ store.find("book")
           firstReview.set("stars", 5); // Set the stars of the first review to 5
         });
 ```
+
+### Objects validation
+
+DataFlux supports automatic validation of the objects. This is important for two reasons:
+* Objects that contain invalid attributes' values are not sent back to the API;
+* Validation errors can be used to automatically suggest errors in the UI.
+
+To specify the validation of the objects for a specific model, you need to add a `validate` dictionary during model creation.
+
+```js
+const book = new Model("book", {
+  retrieve: {
+    url: "https://rest.example.net/api/v1/books/"
+  },
+  validate: {
+    isbn: ({isbn}) => {
+      if (typeof(isbn) !== "number") {
+        throw new Error("The isbn must be a number");
+      }
+    },
+    title: ({title}) => {
+      if (!title) {
+        throw new Error("The title is mandatory");
+      }
+    }
+  }
+});
+```
+
+Each key of the `validate` dictionary is an attribute of the object (a field name), each value is a function receiving in input the object and throwing an error in case the field is not valid.
+
+> Be aware: A validation function cannot return a boolean, you have to throw an error.
+
+To validate a specific attribute of an object, you can do `object.getError(attributeName)` (e.g., `book.getError(isbn)`). In case of error, a string describing the error is returned, `false` otherwise.
+
+Example of usage in a React component.
+
+```js
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render(){
+    const {book} = this.state;
+
+    // A textfield to edit the title of a book
+    return <TextField
+            value={book.title}
+            onChange={store.handleChange(book, "title")}
+            error={object.getError("title")} 
+            // E.g., in material UI the test field will be red in case of errors
+    />;
+  }
+}
+```
+
+> Be aware: if you do `object.getError()` without specifying any attribute, you will receive object errors not associated with any field, such as API errors. This is similar to `store.on("error")`
 
 
 ## Editing objects

@@ -26,6 +26,7 @@ import moment from "moment/moment";
 import {v4 as uuidv4} from "uuid";
 
 export const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
+const globalError = "_object";
 
 export function setValues (values, model, SubObj, parent, context) {
 
@@ -50,7 +51,7 @@ export function setValues (values, model, SubObj, parent, context) {
 export class BasicObj {
     #setHidden = {};
     #id = null;
-    #error = false;
+    #error = {};
     #model;
     constructor(values, model) {
         this.#model = model;
@@ -58,7 +59,6 @@ export class BasicObj {
 
     setId = (id) => {
         this.#id = id;
-        this.#model.getStore().models[this.#model.getType()].storedObjects
     };
 
     getId = () => {
@@ -86,16 +86,27 @@ export class BasicObj {
                 throw new Error("You cannot change the ID");
             }
             this[attribute] = value;
+            this.#model.validateObjectAttribute(this, attribute);
         }
         return this.update();
     };
-    
-    getError = () => {
-        return this.#error;
+
+    getError = (attribute=null) => {
+        const key = attribute ? attribute : globalError;
+        return this.#error[key] ?? false;
     };
-    
-    setError = (error) => {
-        this.#error = error ?? false;
+
+    setError = (error, attribute=null) => {
+
+        if (error && attribute) {
+            this.#error[attribute] = error;
+        } else if (error && !attribute) {
+            this.#error[globalError] = error;
+        } else if (!error && attribute) {
+            delete this.#error[attribute];
+        } else {
+            this.#error = {};
+        }
     };
 
     setConstant = (attribute, value) => {
