@@ -153,20 +153,24 @@ export const getHooksFromUrl = (url) => {
 
 
 export const executeHook = (type, hook, data, axios) => {
-    const hookType = typeof(hook);
+    try {
+        const hookType = typeof (hook);
 
-    switch(hookType) {
-        case "object" :
-            return getDataStringHook(hook, data, axios);
-        case "function":
-            const res = hook(data);
+        switch (hookType) {
+            case "object" :
+                return getDataStringHook(hook, data, axios);
+            case "function":
+                const res = hook(data);
 
-            if (res.method && res.url && res.headers) {
-                return getDataStringHook(res, data, axios);
-            } else {
-                return res;
-            }
-        default:
-            return Promise.reject(`The ${type} hook must be a URL or a function returning a promise`);
+                if (res.method && res.url && res.headers) {
+                    return getDataStringHook(res, data, axios);
+                } else {
+                    return res;
+                }
+            default:
+                return Promise.reject(`The ${type} hook must be a URL or a function returning a promise`);
+        }
+    } catch (e) {
+        return Promise.reject(e);
     }
 }

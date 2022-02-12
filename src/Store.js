@@ -140,12 +140,22 @@ export default class Store {
     };
 
     applyDiff ({inserted=[], updated=[], deleted=[]}, type) {
-        // console.log(inserted, updated, deleted);
         return new Promise((resolve, reject) => {
             try {
 
                 for (let object of inserted.concat(updated)) {
-                    const item = this.models[type || object.object.getModel().getType()].storedObjects[object.id];
+
+                    type = type || object.object.getModel().getType();
+                    const newId = object.object.getId();
+                    const oldId = object.id;
+
+                    const item = this.models[type].storedObjects[object.id];
+
+                    if (newId !== oldId) {
+                        this.models[type].storedObjects[newId] = item;
+                        delete this.models[type].storedObjects[object.id];
+                    }
+
                     item.fingerprint = object.object.getFingerprint();
                     item.status = "old";
                 }
@@ -170,21 +180,6 @@ export default class Store {
     preload(type){
         return this.#getPromise(type);
     }
-
-    _swapIds = (type, oldId, newId) => {
-        const item = this.models[type].storedObjects[oldId];
-
-        // item.object.setId(newId);
-        delete item.object.getId;
-
-        this.models[type].storedObjects[newId] = {
-            ...item,
-            id: newId,
-            fingerprint: item.object.getFingerprint()
-        };
-
-        delete this.models[type].storedObjects[oldId];
-    };
 
     getDiff (type) {
         return this.#getPromise(type)
@@ -234,12 +229,13 @@ export default class Store {
 
         item.promise = item.model.retrieveAll()
             .catch(() => {
-                const objects = this.models[type].storedObjects;
+                const objects = Object.values(this.models[type].storedObjects);
                 let list = [];
 
                 return batchPromises(4, objects, object => {
-                    item.model
-                        .factory(object)
+
+                    return item.model
+                        .factory(object.object)
                         .then(items => {
                             list = list.concat(items);
                         });

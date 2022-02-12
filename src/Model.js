@@ -281,9 +281,9 @@ export default class Model {
     #assignId = (data, objects) => {
         if (data.length === 1) {
             const newId = data[0].id;
-            const oldId = objects[0].getId();
 
-            this.getStore()._swapIds(this.getType(), oldId, newId);
+            objects[0].setId(newId);
+            delete objects[0].setId;
         }
     };
 

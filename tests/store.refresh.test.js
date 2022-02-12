@@ -1,18 +1,18 @@
 const chai = require("chai");
 const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
 const chaiSubset = require('chai-subset');
+const {Store, Model} = require("../src");
 chai.use(chaiSubset);
 const expect = chai.expect;
-
-const store = createTestStore({
-    autoSave: true,
-    lazyLoad: false
-});
 
 describe("Store refresh", function () {
 
     it("insert and retrieve id", function (done) {
 
+        const store = createTestStore({
+            autoSave: true,
+            lazyLoad: false
+        });
         store.on("save", (status) => {
             if (status === "end") {
                 store.find("book", ({title}) => title === "A new book")
@@ -24,6 +24,81 @@ describe("Store refresh", function () {
         });
         store.insert("book", {title: "A new book"});
 
-    }).timeout(20000);
+    }).timeout(10000);
 
+    it("refresh", function (done) {
+
+        let content = [{id: 1}, {id: 2}];
+
+        const store = new Store({
+            autoSave: true,
+            lazyLoad: false
+        });
+        const test = new Model("test", {
+            retrieve: () => content
+        });
+        store.addModel(test);
+
+        store.find("test")
+            .then((data) => {
+                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ])
+            });
+
+        store.on("refresh", ({status}) => {
+            if (status === "end") {
+                store.find("test")
+                    .then((data) => {
+                        expect(data.map(i => i.toJSON())).to.deep
+                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                        done();
+                    });
+            }
+        });
+
+        setTimeout(() => {
+            content = [{id: 1, content: "a"}, {id: 2, content: "b"}];
+            store.refresh();
+        }, 3000);
+
+    }).timeout(10000);
+
+    it("refresh with factory", function (done) {
+
+        let content = [{id: 1}, {id: 2}];
+
+        const store = new Store({
+            autoSave: true,
+            lazyLoad: false
+        });
+        const test = new Model("test", {
+            lazyLoad: true,
+            retrieve: ({id}) => content.filter(i => i.id === id)[0]
+        });
+        store.addModel(test);
+
+        store.factory("test", {id:1});
+        store.factory("test", {id:2});
+
+        store.find("test")
+            .then((data) => {
+                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ]);
+            });
+
+        store.on("refresh", ({status}) => {
+            if (status === "end") {
+                store.find("test")
+                    .then((data) => {
+                        expect(data.map(i => i.toJSON())).to.deep
+                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                        done();
+                    });
+            }
+        });
+
+        setTimeout(() => {
+            content = [{id: 1, content: "a"}, {id: 2, content: "b"}];
+            store.refresh();
+        }, 3000);
+
+    }).timeout(10000);
 });
