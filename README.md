@@ -258,11 +258,12 @@ function MyComponent() {
 The store can be configured with the following options:
 
 
-| Option    | Description                                                                                                                                                                                                                                                                                                                                                                              | Default |
-|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| autoSave  | It can be `true`, `false`, or an amount of milliseconds (integer). If `false`, you will have to perform `store.save()` manually. If `true`, the store will automatically perform `save()` when objects change. If an amount of milliseconds is provided, the objects are saved periodically AND when a change is detected. See [Editing objects](#editing-objects) for more information. | true    |
-| saveDelay | An amount of milliseconds used to defer synching operations with the server. It triggers `store.save()` milliseconds after the last change on the store's objects is detedect. This allows to bundle together multiple changes operated by an interacting user. See [Editing objects](#editing-objects) for more information.                                                            | 1000    |
-| lazyLoad  | A boolean. If set to `false`, the store is pre-populated with all the models' objects. If set to `true`, models' objects are loaded only on first usage (e.g., 'find', 'subscribe', 'getRelation'). LazyLoad operates per model, only the objects of the used models are loaded.                                                                                                         | false   |
+| Option      | Description                                                                                                                                                                                                                                                                                                                                                                                    | Default |
+|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| autoSave    | It can be `true`, `false`, or an amount of milliseconds (integer). If `false`, you will have to perform `store.save()` manually. If `true`, the store will automatically perform `store.save()` when objects change. If an amount of milliseconds is provided, the objects are saved periodically AND when a change is detected. See [Editing objects](#editing-objects) for more information. | true    |
+| saveDelay   | An amount of milliseconds used to defer synching operations with the server. It triggers `store.save()` milliseconds after the last change on the store's objects is detedect. This allows to bundle together multiple changes operated by an interacting user. See [Editing objects](#editing-objects) for more information.                                                                  | 1000    |
+| lazyLoad    | A boolean. If set to `false`, the store is pre-populated with all the models' objects. If set to `true`, models' objects are loaded only on first usage (e.g., 'find', 'subscribe', 'getRelation'). LazyLoad operates per model, only the objects of the used models are loaded.                                                                                                               | false   |
+| autoRefresh | It can be `true`, `false`, or an amount of milliseconds (integer). If `false`, you will have to perform `store.refresh()` manually. If `true`, the store will automatically perform `store.refresh()` every 2 minutes. If an amount of milliseconds is provided, the `store.refresh()` is performed periodically. See [store methods](#store-methods) for more information.                    | false   |
 
 
 
@@ -561,7 +562,9 @@ The store has the following method.
 | findOne(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. If multiple objects satisfy the query, only the first is selected. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. See [example 6](#example-6---observability--react).                                  |
 | findAll(type, stateAttribute, context, filterFunction) | This method automatically injects and updates the React state with the requested data. The `stateAttribute` is the name of the attribute that will be added/updated in the state, the `context` is the React.Component. It automatically unsubscribe when the React.Component will unmount. If the filter function is missing, all the objects are returned. See [example 6](#example-6---observability--react).                                    |
 | preload(type)                                          | This method allows to preLoad all objects of a given model. If you initialize the store with `lazyLoad:true`, the objects of a model are retrieved from the API at the first query performed on that model (e.g., at the first `.find()`). However, sometimes you may want to speed up the first query by pre loading the objects of a specific model while keeping `lazyLoad:true` on the store; in such a case you can use `store.preload(type)`. |
-
+| save()                                                 | Persist the changes. Edited local objects will be sent to the REST APIs (insert/update/delete). See also [editing objects](#editing-objects).                                                                                                                                                                                                                                                                                                       |
+| save()                                                 | Persist the changes (`local -> remote`). Edited local objects will be sent to the REST APIs (insert/update/delete). See also [editing objects](#editing-objects).                                                                                                                                                                                                                                                                                   |
+| refresh()                                              | This method syncs all the objects in the store with the remote version offered by the REST APIs (`remote -> local`). Remote changes are applied locally, including adding/removing objects. Objects edited locally but not yet persisted are preserved locally (tip: you can also create a store with the `autoRefresh` option).                                                                                                                    |
 ### Insert vs. Mock
 
 If you do:
@@ -586,15 +589,15 @@ However, the mock object is not sent to the API as long as you don't call `.inse
 > Warning: to promote a mock object, you need to call `object.insert()` on the object itself (you must first retrieve it) and NOT `store.insert()`.
 
 
-
 ## Store events
 The store emits the following events:
 
-| Name    | Description                                                                                                                           |
-|---------|---------------------------------------------------------------------------------------------------------------------------------------|
-| error   | To listen the errors emitted by the store.                                                                                            |
-| save    | Possible emitted values are `start` and `end`. They are emitted when the store starts/finishes to persist the data (API interaction). |
-| loading | The event is emitted while a new model is loaded. The value contains something like `{status: "start", model: "book"}`                |
+| Name       | Description                                                                                                                           |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| error      | To listen the errors emitted by the store.                                                                                            |
+| save       | Possible emitted values are `start` and `end`. They are emitted when the store starts/finishes to persist the data (API interaction). |
+| loading    | The event is emitted while a new model is loaded. The value contains something like `{status: "start", model: "book"}`                |
+| refreshing | The event is emitted while a model is refreshed. The value contains something like `{status: "start", model: "book"}`                 |
 
 ## Objects methods
 Each object created is enriched with the following methods.

@@ -31,12 +31,17 @@ const objectStatuses = ["new", "old", "mock", "deleted"];
 export default class Store {
     constructor(options={}) {
         this.options = {
-            autoSave: options.autoSave !== undefined ? options.autoSave : true,
+            autoSave: options.autoSave ?? true,
             saveDelay: options.saveDelay || 1000,
-            lazyLoad: options.lazyLoad || false
+            lazyLoad: options.lazyLoad ?? false,
+            autoRefresh: options.autoRefresh === true ? 120000 : options.autoRefresh
         };
         this.models = {};
         this.pubSub = new PubSub();
+
+        if (this.options.autoRefresh && typeof(this.options.autoRefresh) === "number") {
+            setInterval(this.refresh, this.options.autoRefresh);
+        }
     };
 
     getModels = () => {
@@ -218,66 +223,73 @@ export default class Store {
         return item.promise;
     };
 
-    refresh = () => {
-        return Promise.all(Object.keys(this.models).map(this.#refreshObjectByType));
+    refresh = (type) => {
+        if (type) {
+            return this.#refreshObjectByType(type);
+        } else {
+            return Promise.all(Object.keys(this.models).map(this.#refreshObjectByType));
+        }
     };
 
     #refreshObjectByType = (type) => {
-        const item = this.models[type];
+        return this.#getPromise(type)
+            .then(() => {
+                const item = this.models[type];
 
-        this.pubSub.publish("refresh", {status: "start", model: type});
+                this.pubSub.publish("refresh", {status: "start", model: type});
 
-        item.promise = item.model.retrieveAll()
-            .catch(() => {
-                const objects = Object.values(this.models[type].storedObjects);
-                let list = [];
+                item.promise = item.model.retrieveAll()
+                    .catch(() => {
+                        const objects = Object.values(this.models[type].storedObjects);
+                        let list = [];
 
-                return batchPromises(4, objects, object => {
+                        return batchPromises(4, objects, object => {
 
-                    return item.model
-                        .factory(object.object)
-                        .then(items => {
-                            list = list.concat(items);
-                        });
-                })
-                    .then(() => list);
-            })
-            .then(objects => {
+                            return item.model
+                                .factory(object.object)
+                                .then(items => {
+                                    list = list.concat(items);
+                                });
+                        })
+                            .then(() => list);
+                    })
+                    .then(objects => {
 
-                for (let object of objects) {
+                        for (let object of objects) {
 
-                    const wrapper = new Obj(object, item.model);
-                    const id = wrapper.getId();
-                    const currentObject = item?.storedObjects[id];
+                            const wrapper = new Obj(object, item.model);
+                            const id = wrapper.getId();
+                            const currentObject = item?.storedObjects[id];
 
-                    // console.log("currentObject", item);
+                            // console.log("currentObject", item);
 
-                    if (currentObject) {
+                            if (currentObject) {
 
-                        const newFingerprint = wrapper.getFingerprint();
-                        const oldFingerprint = currentObject.fingerprint;
+                                const newFingerprint = wrapper.getFingerprint();
+                                const oldFingerprint = currentObject.fingerprint;
 
-                        if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
-                            if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
+                                if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
+                                    if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
 
-                                // Nothing for now
+                                        // Nothing for now
 
-                            } else { // Update with the new object
-                                // console.log("merge", wrapper);
+                                    } else { // Update with the new object
+                                        // console.log("merge", wrapper);
 
-                                this.#merge(this.models[type].storedObjects[id].object, wrapper.toJSON())
-                                this.models[type].storedObjects[id].fingerprint = newFingerprint;
+                                        this.#merge(this.models[type].storedObjects[id].object, wrapper.toJSON())
+                                        this.models[type].storedObjects[id].fingerprint = newFingerprint;
+                                    }
+                                }
+
+                            } else {
+                                this.#insertObject(type, object, "old");
                             }
                         }
+                        this.pubSub.publish("refresh", {status: "end", model: type});
+                    });
 
-                    } else {
-                        this.#insertObject(type, object, "old");
-                    }
-                }
-                this.pubSub.publish("refresh", {status: "end", model: type});
+                return item.promise;
             });
-
-        return item.promise;
     };
 
     #merge = (originalObject, newObject) => {

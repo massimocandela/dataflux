@@ -26,7 +26,7 @@ describe("Store refresh", function () {
 
     }).timeout(10000);
 
-    it("refresh", function (done) {
+    it("refresh - no autoRefresh", function (done) {
 
         let content = [{id: 1}, {id: 2}];
 
@@ -98,6 +98,42 @@ describe("Store refresh", function () {
         setTimeout(() => {
             content = [{id: 1, content: "a"}, {id: 2, content: "b"}];
             store.refresh();
+        }, 3000);
+
+    }).timeout(10000);
+
+    it("refresh - autoRefresh", function (done) {
+
+        let content = [{id: 1}, {id: 2}];
+
+        const store = new Store({
+            autoSave: true,
+            lazyLoad: false,
+            autoRefresh: 5000
+        });
+        const test = new Model("test", {
+            retrieve: () => content
+        });
+        store.addModel(test);
+
+        store.find("test")
+            .then((data) => {
+                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ])
+            });
+
+        store.on("refresh", ({status}) => {
+            if (status === "end") {
+                store.find("test")
+                    .then((data) => {
+                        expect(data.map(i => i.toJSON())).to.deep
+                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                        done();
+                    });
+            }
+        });
+
+        setTimeout(() => {
+            content = [{id: 1, content: "a"}, {id: 2, content: "b"}];
         }, 3000);
 
     }).timeout(10000);
