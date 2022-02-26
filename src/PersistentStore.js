@@ -29,6 +29,7 @@ export default class PersistentStore extends Store{
         super(options);
         this._busy = false;
         this._delayedSaveTimer = null;
+        this._delayedSavePromise = null;
 
         if (typeof(this.options.autoSave) === "number") {
             setInterval(() => {
@@ -88,9 +89,8 @@ export default class PersistentStore extends Store{
     insert(type, objects) {
         return super.insert(type, objects)
             .then(data => {
-                this.delayedSave();
-
-                return data;
+                return this.delayedSave()
+                    .then(() => data)
             });
     };
 
@@ -101,9 +101,8 @@ export default class PersistentStore extends Store{
     delete(typeOrObjects, filterFunction) {
         return super.delete(typeOrObjects, filterFunction)
             .then(data => {
-                this.delayedSave();
-
-                return data;
+                return this.delayedSave()
+                    .then(() => data)
             });
     };
 
@@ -116,11 +115,11 @@ export default class PersistentStore extends Store{
                         const type = object.getModel().getType();
                         this.models[type].storedObjects[object.getId()].fingerprint = object.getFingerprint();
                     }
+                    return objects;
                 } else {
-                    this.delayedSave();
+                    return this.delayedSave()
+                        .then(() => objects);
                 }
-
-                return objects;
             });
     };
 
@@ -150,11 +149,21 @@ export default class PersistentStore extends Store{
     };
 
     delayedSave = () => {
-        if (this.options.autoSave) {
-            if (this._delayedSaveTimer) {
-                clearTimeout(this._delayedSaveTimer);
+        return new Promise((resolve, reject) => {
+            if (this.options.autoSave) {
+                if (this._delayedSaveTimer) {
+                    this._delayedSavePromise();
+                    this._delayedSavePromise = null;
+                    clearTimeout(this._delayedSaveTimer);
+                }
+                this._delayedSavePromise = resolve;
+                this._delayedSaveTimer = setTimeout(() => {
+                    resolve(this.save());
+                    this._delayedSavePromise = null;
+                }, this.options.saveDelay);
+            } else {
+                resolve();
             }
-            this._delayedSaveTimer = setTimeout(this.save, this.options.saveDelay);
-        }
+        });
     };
 }
