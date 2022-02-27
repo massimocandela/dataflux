@@ -152,9 +152,12 @@ export default class PersistentStore extends Store{
         return new Promise((resolve, reject) => {
             if (this.options.autoSave) {
                 if (this._delayedSaveTimer) {
-                    this._delayedSavePromise();
-                    this._delayedSavePromise = null;
+                    if (this._delayedSavePromise) {
+                        this._delayedSavePromise();
+                        this._delayedSavePromise = null;
+                    }
                     clearTimeout(this._delayedSaveTimer);
+                    this._delayedSaveTimer = null;
                 }
                 this._delayedSavePromise = resolve;
                 this._delayedSaveTimer = setTimeout(() => {
