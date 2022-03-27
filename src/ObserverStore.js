@@ -25,6 +25,7 @@
 import { v4 as uuidv4 } from "uuid";
 import batchPromises from "batch-promises";
 import PersistentStore from "./PersistentStore";
+import Obj from "./Obj";
 
 class ObserverStore extends PersistentStore {
     #queryPromises = [];
@@ -33,6 +34,10 @@ class ObserverStore extends PersistentStore {
         super(options);
         this._subscribed = {};
         this._multipleSubscribed = {};
+
+        if (options.autoRefresh && typeof(options.autoRefresh) === "number") {
+            setInterval(this.refresh, options.autoRefresh);
+        }
     };
 
     multipleSubscribe = (subscriptions, callback) => {
@@ -184,6 +189,43 @@ class ObserverStore extends PersistentStore {
         }
 
     };
+
+    refresh  = (type) => {
+
+        const refreshByType = (type) => {
+            this.pubSub.publish("refresh", {status: "start", model: type});
+            return this.refreshObjectByType(type)
+                .then(([inserted, updated, deleted]) => {
+                    const item = this.models[type];
+
+                    return Promise
+                        .all([
+                            this.#propagateInsertChange(type, inserted),
+                            this.#propagateChange(updated),
+                            this.#propagateChange(deleted)
+                        ])
+                        .then(() => {
+                            this.pubSub.publish("refresh", {status: "end", model: type});
+
+                            return item.promise;
+                        })
+                });
+        }
+
+        if (type) {
+            return refreshByType(type);
+        } else {
+            return Promise.all(Object.keys(this.models).map(refreshByType));
+        }
+    };
+
+    #merge = (originalObject, newObject) => {
+        for (let key in newObject) {
+            originalObject[key] = newObject[key];
+        }
+        originalObject.update();
+    };
+
 
     #propagateInsertChange (type, newObjects) {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())

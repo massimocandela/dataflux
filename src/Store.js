@@ -38,10 +38,6 @@ export default class Store {
         };
         this.models = {};
         this.pubSub = new PubSub();
-
-        if (this.options.autoRefresh && typeof(this.options.autoRefresh) === "number") {
-            setInterval(this.refresh, this.options.autoRefresh);
-        }
     };
 
     getModels = () => {
@@ -223,20 +219,13 @@ export default class Store {
         return item.promise;
     };
 
-    refresh = (type) => {
-        if (type) {
-            return this.#refreshObjectByType(type);
-        } else {
-            return Promise.all(Object.keys(this.models).map(this.#refreshObjectByType));
-        }
-    };
-
-    #refreshObjectByType = (type) => {
+    refreshObjectByType = (type) => {
         return this.#getPromise(type)
             .then(() => {
                 const item = this.models[type];
-
-                this.pubSub.publish("refresh", {status: "start", model: type});
+                const inserted = [];
+                const deleted = [];
+                const updated = [];
 
                 item.promise = item.model.retrieveAll()
                     .catch(() => {
@@ -261,10 +250,8 @@ export default class Store {
                             const id = wrapper.getId();
                             const currentObject = item?.storedObjects[id];
 
-                            // console.log("currentObject", item);
-
                             if (currentObject) {
-
+                                currentObject.deleted = false;
                                 const newFingerprint = wrapper.getFingerprint();
                                 const oldFingerprint = currentObject.fingerprint;
 
@@ -274,18 +261,31 @@ export default class Store {
                                         // Nothing for now
 
                                     } else { // Update with the new object
-                                        // console.log("merge", wrapper);
-
-                                        this.#merge(this.models[type].storedObjects[id].object, wrapper.toJSON())
-                                        this.models[type].storedObjects[id].fingerprint = newFingerprint;
+                                        this.#merge(currentObject.object, wrapper.toJSON())
+                                        currentObject.fingerprint = newFingerprint;
+                                        updated.push(currentObject.object);
                                     }
                                 }
 
                             } else {
-                                this.#insertObject(type, object, "old");
+                                const newObject = this.#insertObject(type, object, "old");
+                                item.storedObjects[newObject.getId()].deleted = false;
+
+                                inserted.push(newObject);
                             }
                         }
-                        this.pubSub.publish("refresh", {status: "end", model: type});
+
+                        for (let id in item?.storedObjects) {
+                            const obj = item.storedObjects[id];
+                            if (obj.deleted === undefined) {
+                                deleted.push(obj.object);
+                                delete item.storedObjects[id];
+                            } else {
+                                delete obj.deleted;
+                            }
+                        }
+
+                        return [inserted, updated, deleted];
                     });
 
                 return item.promise;
@@ -296,7 +296,7 @@ export default class Store {
         for (let key in newObject) {
             originalObject[key] = newObject[key];
         }
-        originalObject.update();
+        // originalObject.update();
     };
 
     #error (error) {
@@ -342,7 +342,7 @@ export default class Store {
         }
     };
 
-    #insertObject (type, item, status) {
+    #insertObject = (type, item, status) => {
         const model = this.models[type].model;
         const wrapper = new Obj(item, model);
         const id = wrapper.getId();
