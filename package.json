@@ -81,7 +81,7 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
-    "@babel/core": "^7.17.5",
+    "@babel/core": "^7.17.8",
     "@babel/node": "^7.16.8",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-proposal-object-rest-spread": "^7.17.3",
@@ -91,13 +91,13 @@
     "browserify": "^17.0.0",
     "chai": "^4.3.6",
     "chai-subset": "^1.6.0",
-    "dotenv-cli": "^5.0.0",
-    "mocha": "^9.2.1",
-    "release-it": "^14.12.5",
-    "uglify-js": "^3.15.2"
+    "dotenv-cli": "^5.1.0",
+    "mocha": "^9.2.2",
+    "release-it": "^14.13.1",
+    "uglify-js": "^3.15.3"
   },
   "dependencies": {
-    "axios": "^0.26.0",
+    "axios": "^0.26.1",
     "batch-promises": "^0.0.3",
     "brembo": "^2.0.6",
     "crc-32": "^1.2.1",
