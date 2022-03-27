@@ -25,7 +25,6 @@
 import { v4 as uuidv4 } from "uuid";
 import batchPromises from "batch-promises";
 import PersistentStore from "./PersistentStore";
-import Obj from "./Obj";
 
 class ObserverStore extends PersistentStore {
     #queryPromises = [];
