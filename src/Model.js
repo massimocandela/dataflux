@@ -290,7 +290,9 @@ export default class Model {
         const operation = "insert";
         return executeHook(operation, this.#insertHook, this.#unWrap(objects), this.#axios)
             .then(data => {
-                if (data) this.#assignId(data, objects);
+                if (data) {
+                    this.#assignId(data, objects);
+                }
                 this.#cleanApiError(objects);
 
                 return data;
@@ -303,7 +305,7 @@ export default class Model {
     };
 
     #assignId = (data, objects) => {
-        if (data.length === 1) {
+        if (data.length === 1 && objects.length === 1) {
             const newId = data[0].id;
 
             objects[0].setId(newId);

@@ -227,7 +227,8 @@ export default class Store {
                 const deleted = [];
                 const updated = [];
 
-                item.promise = item.model.retrieveAll()
+                item.promise = item.model
+                    .retrieveAll()
                     .catch(() => {
                         const objects = Object.values(this.models[type].storedObjects);
                         let list = [];
