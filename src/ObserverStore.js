@@ -90,31 +90,37 @@ class ObserverStore extends PersistentStore {
     };
 
     unsubscribe = (key) => {
-        if (this.#queryPromises.length) {
+        this.#unsubPromises = (this.#queryPromises.length
+            ? Promise.all(this.#queryPromises)
+            : Promise.resolve())
+            .then(() => {
+                if (this._multipleSubscribed[key]) {
+                    for (let sub of this._multipleSubscribed[key]) {
+                        this.unsubscribe(sub);
+                    }
+                    delete this._multipleSubscribed[key];
+                } else {
+                    for (let type in this._subscribed) {
+                        for (let id in this._subscribed[type]) {
 
-            this.#unsubPromises = Promise.all(this.#queryPromises)
-                .then(() => {
-                    if (this._multipleSubscribed[key]) {
-                        for (let sub of this._multipleSubscribed[key]) {
-                            this.unsubscribe(sub);
-                        }
-                        delete this._multipleSubscribed[key];
-                    } else {
-                        for (let type in this._subscribed) {
-                            for (let id in this._subscribed[type]) {
-                                this._subscribed[type][id] = this._subscribed[type][id]
-                                    .filter(i => {
-                                        return i.subKey !== key
-                                    });
+                            this._subscribed[type][id] = this._subscribed[type][id]
+                                .filter(i => {
+                                    return i.subKey !== key;
+                                });
 
-                                if (this._subscribed[type][id].length === 0) {
-                                    delete this._subscribed[type][id];
-                                }
+                            this._subscribed[type]["*"] = this._subscribed[type]["*"]
+                                .filter(i => {
+                                    return i.subKey !== key;
+                                });
+
+                            if (this._subscribed[type][id].length === 0) {
+                                delete this._subscribed[type][id];
                             }
                         }
                     }
-                });
-        }
+                }
+            });
+
     };
 
     update(objects, skipSave) {
@@ -179,14 +185,22 @@ class ObserverStore extends PersistentStore {
             });
     };
 
+    #appendIfNotExistent = (arr, item) => {
+        if (Object.values(arr).filter(({subKey}) => item.subKey === subKey).length === 0) {
+            arr.push(item);
+        }
+    };
+
     #subscribeToObjects = (type, objectsToSubscribe, item) => {
 
         for (let object of objectsToSubscribe) {
             const id = object.getId();
             this._subscribed[type][id] ??= [];
-            this._subscribed[type][id].push(item);
+            this.#appendIfNotExistent(this._subscribed[type][id], item);
         }
 
+        this._subscribed[type]["*"] ??= [];
+        this.#appendIfNotExistent(this._subscribed[type]["*"], item);
     };
 
     refresh  = (type) => {
@@ -225,11 +239,11 @@ class ObserverStore extends PersistentStore {
         originalObject.update();
     };
 
-
     #propagateInsertChange (type, newObjects) {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
             .then(() => {
                 if (this._subscribed[type]) {
+
                     const uniqueSubs = {};
                     const objects = Object.values(this._subscribed[type]);
 
@@ -243,7 +257,7 @@ class ObserverStore extends PersistentStore {
 
                     const possibleSubs = Object.values(uniqueSubs);
 
-                    batchPromises(10, possibleSubs, ({callback, filterFunction}) => {
+                    batchPromises(10, possibleSubs, ({callback, filterFunction, subKey}) => {
 
                         const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
 
@@ -251,13 +265,6 @@ class ObserverStore extends PersistentStore {
 
                             return this.find(type, filterFunction)
                                 .then(data => {
-                                    let subKey;
-                                    for (let d of data) {
-                                        const item = this._subscribed[d.getModel().getType()][d.getId()];
-                                        subKey = item ? item.subKey : null
-                                        if (subKey) break;
-                                    }
-
                                     this.#subscribeToObjects(type, objectsToSubscribe, {
                                         callback,
                                         filterFunction,

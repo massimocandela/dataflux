@@ -31,6 +31,28 @@ describe("Store subscribe", function() {
         }, filter);
     });
 
+    it("loading collection - filter function - update", function (done) {
+        const filter = ({id}) => id === 190;
+        let once = false;
+        const pkey = store.subscribe("author", (data) => {
+            const str = JSON.stringify(data);
+
+            if (once) {
+                expect(str === '[{"id":190,"name":"test"}]').to.equal(true);
+                done();
+            } else {
+                once = true;
+                expect(str === "[]").to.equal(true);
+            }
+        }, filter);
+
+        setTimeout(() => store.unsubscribe(pkey), 5000);
+
+        store.insert("author", {id: 190, name: "test"});
+
+    }).timeout(10000);
+
+
     it("respecting fields", function (done) {
         const pkey = store.subscribe("book", (data) => {
             const first = data[0];
