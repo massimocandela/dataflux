@@ -78,7 +78,7 @@ export class BasicObj {
         return this.#setHidden[attribute] ?? this[attribute] ?? defaultValue;
     };
 
-    set = (attribute, value, hidden) => {
+    set(attribute, value, hidden) {
         if (hidden) {
             this.#setHidden[attribute] = value;
         } else {

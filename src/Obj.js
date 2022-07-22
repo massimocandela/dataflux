@@ -36,6 +36,16 @@ export default class Obj extends BasicObj{
         this.getModel = () => model;
     };
 
+    set = (attribute, value, hidden) => {
+        if (Array.isArray(value) && this.getModel().options.deep) {
+            value = value.map(i => {
+                return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
+            });
+        }
+
+        return super.set(attribute, value, hidden);
+    }
+
     load = () => {
         if (this.#loaded) {
             return Promise.resolve(this);
