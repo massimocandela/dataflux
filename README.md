@@ -234,6 +234,8 @@ The method `findAll` returns always an array. The method `findOne` returns a sin
 
 When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll()` injects the unsubscribe call inside `componentWillUnmount()`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe()` and `store.unsubscribe()` instead of `store.findAll()`, to avoid side effects when the component is unmounted.
 
+> Note: handleChange allows for type casting. E.g., store.handleChange(book, "pages", Integer.parseInt)
+
 In case you prefer React hooks:
 
 ```js

@@ -75,10 +75,11 @@ export default class ReactStore extends ObserverStore {
         }
     }
 
-    handleChange = (object, name) => {
+    handleChange = (object, name, cast) => {
         return (event, rawValue) => {
             const value = event ? (event.target.type === "checkbox" ? event.target.checked : event.target.value) : "";
-            object.set(name, value ?? rawValue ?? "");
+            const finalValue = value ?? rawValue;
+            object.set(name, cast && finalValue != null ? cast(finalValue) : finalValue);
         }
     };
 
