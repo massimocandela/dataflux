@@ -144,19 +144,19 @@ describe("Store React", function() {
             lazyLoad: true
         });
         const component = new fakeReactComponent();
-        let once = true;
+        let times = 0;
 
         component.render = (state) => {
             const first = state.book;
 
-            if (once) {
+            if (times === 0) {
                 setTimeout(() => first.load(), 2000);
-                once = false;
-            } else {
+            } else if (times === 1) {
                 const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, Third Edition","authorId":0,"pages":472};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
+            times++;
         }
 
         component.componentDidMount = () => {
@@ -171,23 +171,23 @@ describe("Store React", function() {
             lazyLoad: true
         });
         const component = new fakeReactComponent();
-        let once = true;
+        let times = 0;
 
         component.render = (state) => {
             const first = state.book;
 
-            if (once) {
+            if (times === 0) {
                 setTimeout(() => {
                     first.set("title", "Eloquent JavaScript, First Edition");
                 }, 4000);
-                once = false;
                 const expected = {"isbn":"9781593279509"};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
-            } else {
+            } else if (times === 1) {
                 const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, First Edition"};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
+            times++;
         }
 
         component.componentDidMount = () => {
