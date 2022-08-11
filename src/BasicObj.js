@@ -88,6 +88,7 @@ export class BasicObj {
             this[attribute] = value;
             this.#model.validateObjectAttribute(this, attribute);
         }
+
         return this.update();
     };
 

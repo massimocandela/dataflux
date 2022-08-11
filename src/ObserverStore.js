@@ -124,6 +124,10 @@ class ObserverStore extends PersistentStore {
     };
 
     update(objects, skipSave) {
+        if (!skipSave) {
+            this.#propagateChange(objects);
+        }
+
         return super.update(objects, skipSave)
             .then(this.#propagateChange);
     };
