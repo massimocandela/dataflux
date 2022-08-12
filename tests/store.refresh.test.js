@@ -17,7 +17,7 @@ describe("Store refresh", function () {
             if (status === "end") {
                 store.find("book", ({title}) => title === "A new book")
                     .then(([d]) => {
-                        expect(d.getId()).to.equals(34);
+                        expect(d.id).to.equals(34);
                         done();
                     });
             }
