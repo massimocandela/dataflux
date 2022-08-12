@@ -82,7 +82,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
             if (!defaultUrl) {
                 console[console.warn?"warn":"log"](`The ${defaultMethod} operations will not work, there is no valid url or function for it.`);
 
-                return ()=> Promise.resolve([]);
+                return () => Promise.resolve([]);
             } else {
                 return {
                     method: defaultMethod,

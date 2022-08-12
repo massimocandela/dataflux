@@ -305,11 +305,12 @@ export default class Model {
     };
 
     #assignId = (data, objects) => {
-        if (data.length === 1 && objects.length === 1) {
-            const newId = data[0].id;
+        if (Array.isArray(data) && Array.isArray(objects) && objects.length === data.length) {
 
-            objects[0].setId(newId);
-            delete objects[0].setId;
+            for (let i=0; i < data.length; i++){
+                objects[i].setId(data[i].id);
+                delete objects[i].setId;
+            }
         }
     };
 

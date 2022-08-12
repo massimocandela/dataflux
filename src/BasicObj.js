@@ -58,12 +58,12 @@ export class BasicObj {
     };
 
     setId = (id) => {
-        this.#id = id;
+        this.id = id;
     };
 
     getId = () => {
         if (!this.#id) {
-            if (this.id && (typeof (this.id) === "string" || typeof (this.id) === "number")) {
+            if (this.id != null && (typeof (this.id) === "string" || typeof (this.id) === "number")) {
                 this.#id = this.id.toString();
                 delete this.setId;
             } else {
