@@ -39,7 +39,11 @@ export default class Obj extends BasicObj{
     set = (attribute, value, hidden) => {
         if (Array.isArray(value) && this.getModel().options.deep) {
             value = value.map(i => {
-                return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
+                if (["boolean", "string", "number"].includes(typeof(i))) {
+                    return i;
+                } else {
+                    return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
+                }
             });
         }
 
