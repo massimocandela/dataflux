@@ -108,10 +108,12 @@ class ObserverStore extends PersistentStore {
                                     return i.subKey !== key;
                                 });
 
-                            this._subscribed[type]["*"] = this._subscribed[type]["*"]
-                                .filter(i => {
-                                    return i.subKey !== key;
-                                });
+                            if (this._subscribed[type]["*"]) {
+                                this._subscribed[type]["*"] = this._subscribed[type]["*"]
+                                    .filter(i => {
+                                        return i.subKey !== key;
+                                    });
+                            }
 
                             if (this._subscribed[type][id].length === 0) {
                                 delete this._subscribed[type][id];
