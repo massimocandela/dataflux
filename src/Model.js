@@ -80,8 +80,14 @@ export default class Model {
         const validate = this.options.validate;
         if (validate && validate[key]) {
             try {
-                validate[key](object);
-                object.setError(false, key);
+                const call = validate[key](object, this.#store);
+                if (call.then) {
+                    call
+                        .then(() => object.setError(false, key))
+                        .catch(error => object.setError(error.message, key));
+                } else {
+                    object.setError(false, key);
+                }
             } catch (error) {
                 object.setError(error.message, key);
             }
