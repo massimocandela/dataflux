@@ -104,17 +104,17 @@ export default class Store {
     };
 
     insert (type, objects) {
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, "new")));
     };
 
     mock (type, objects) {
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, "mock")));
     };
 
     get (type, id) {
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => {
                 try {
                     return this.models[type].storedObjects[id].object;
@@ -124,15 +124,17 @@ export default class Store {
             });
     };
 
-    find (type, filterFunction) {
-        return this.#getPromise(type)
-            .then(() => {
-                const all = Object.values(this.models[type].storedObjects)
-                    .filter(i => i.status !== "deleted")
-                    .map(i => i.object);
+    findSync = (type, filterFunction) => {
+        const all = Object.values(this.models[type].storedObjects)
+            .filter(i => i.status !== "deleted")
+            .map(i => i.object);
 
-                return filterFunction ? all.filter(filterFunction) : all;
-            })
+        return filterFunction ? all.filter(filterFunction) : all;
+    }
+
+    find (type, filterFunction) {
+        return this._getPromise(type)
+            .then(() => this.findSync(type, filterFunction))
             .catch(error => {
                 this.pubSub.publish("error", error);
 
@@ -179,11 +181,11 @@ export default class Store {
     };
 
     preload(type){
-        return this.#getPromise(type);
+        return this._getPromise(type);
     }
 
     getDiff (type) {
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => {
                 const objects = Object.values(this.models[type].storedObjects);
 
@@ -220,7 +222,7 @@ export default class Store {
     };
 
     refreshObjectByType = (type) => {
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => {
                 const item = this.models[type];
                 const inserted = [];
@@ -317,7 +319,7 @@ export default class Store {
 
     #deleteByFilter (type, filterFunction) {
 
-        return this.#getPromise(type)
+        return this._getPromise(type)
             .then(() => {
                 const deleted = Object.values(this.models[type].storedObjects)
                     .filter(i => filterFunction(i.object));
@@ -330,7 +332,7 @@ export default class Store {
             });
     };
 
-    #getPromise (type) {
+    _getPromise (type) {
         if (!this.models[type]) {
             return Promise.reject("The model doesn't exist");
         } else if (!this.models[type].promise && !this.options.lazyLoad) {

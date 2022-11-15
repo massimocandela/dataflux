@@ -81,7 +81,7 @@ export default class Model {
         if (validate && validate[key]) {
             try {
                 const call = validate[key](object, this.#store);
-                if (call.then) {
+                if (call?.then) {
                     call
                         .then(() => object.setError(false, key))
                         .catch(error => object.setError(error.message, key));
