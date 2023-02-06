@@ -34,6 +34,7 @@ export default class Store {
             autoSave: options.autoSave ?? true,
             saveDelay: options.saveDelay || 1000,
             lazyLoad: options.lazyLoad ?? false,
+            batchPersistence: options.batchPersistence ?? 1000,
             autoRefresh: options.autoRefresh === true ? 120000 : options.autoRefresh
         };
         this.models = {};

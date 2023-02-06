@@ -123,7 +123,8 @@ describe("Store and models creation", function() {
     it("autoSave: 4000", function (done) {
 
         const store = new Store({
-            autoSave: 4000
+            autoSave: 4000,
+            batchPersistence: 100
         });
 
         const book = new Model("book", {

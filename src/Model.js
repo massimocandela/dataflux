@@ -48,7 +48,8 @@ export default class Model {
             deep: options.deep ?? true,
             parseMoment: options.parseMoment ?? false,
             lazyLoad: options.lazyLoad,
-            validate: options.validate ?? {}
+            validate: options.validate ?? {},
+            autoRefresh: options.autoRefresh ?? false
         };
         this.#store = null;
         this.#includes = {};
@@ -74,6 +75,10 @@ export default class Model {
 
         this.#singleItemQuery = false; // By default use arrays
         this.#batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
+
+        if (this.options.autoRefresh && typeof(this.options.autoRefresh) === "number") {
+            setInterval(() => {this.getStore().refresh(this.#type)}, this.options.autoRefresh);
+        }
     };
 
     validateObjectAttribute = (object, key) => {
