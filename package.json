@@ -91,7 +91,7 @@
     "browserify": "^17.0.0",
     "chai": "^4.3.7",
     "chai-subset": "^1.6.0",
-    "dotenv-cli": "^6.0.0",
+    "dotenv-cli": "^7.0.0",
     "mocha": "^10.2.0",
     "release-it": "^15.6.0"
   },
@@ -101,7 +101,7 @@
     "brembo": "^2.0.7",
     "crc-32": "^1.2.2",
     "moment": "^2.29.4",
-    "uuid": "^8.3.2"
+    "uuid": "^9.0.0"
   },
   "resolutions": {}
 }
