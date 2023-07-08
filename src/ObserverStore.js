@@ -209,11 +209,19 @@ class ObserverStore extends PersistentStore {
         this.#appendIfNotExistent(this._subscribed[type]["*"], item);
     };
 
-    refresh  = (type) => {
+    reset = (type) => {
+        return this._refresh(type, true);
+    }
+
+    refresh = (type) => {
+        return this._refresh(type, false);
+    }
+
+    _refresh = (type, force) => {
 
         const refreshByType = (type) => {
             this.pubSub.publish("refresh", {status: "start", model: type});
-            return this.refreshObjectByType(type)
+            return this.refreshObjectByType(type, force)
                 .then(([inserted, updated, deleted]) => {
                     const item = this.models[type];
 

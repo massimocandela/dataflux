@@ -222,7 +222,7 @@ export default class Store {
         return item.promise;
     };
 
-    refreshObjectByType = (type) => {
+    refreshObjectByType = (type, force=false) => {
         return this._getPromise(type)
             .then(() => {
                 const item = this.models[type];
@@ -260,7 +260,13 @@ export default class Store {
                                 const oldFingerprint = currentObject.fingerprint;
 
                                 if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
-                                    if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
+                                    if (force) {
+                                        this.#wipe(currentObject.object);
+                                        this.#merge(currentObject.object, wrapper.toJSON())
+                                        currentObject.fingerprint = newFingerprint;
+                                        updated.push(currentObject.object);
+
+                                    } else if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
 
                                         // Nothing for now
 
@@ -300,7 +306,14 @@ export default class Store {
         for (let key in newObject) {
             originalObject[key] = newObject[key];
         }
-        // originalObject.update();
+    };
+
+    #wipe = (originalObject) => {
+        for (let key in originalObject) {
+            if (key !== "id") {
+                delete originalObject[key];
+            }
+        }
     };
 
     #error (error) {
