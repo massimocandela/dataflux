@@ -71,7 +71,7 @@ export default class PersistentStore extends Store{
             clearTimeout(this._delayedSaveTimer);
         }
 
-        return Promise.all(Object.keys(this.models).map(this._saveByType))
+        return Promise.all(Object.keys(this.models).map(i => this._saveByType(i, true)))
             .then(data => {
                 this._busy = false;
                 this.pubSub.publish("save", "end");
@@ -90,7 +90,7 @@ export default class PersistentStore extends Store{
         return super.insert(type, objects)
             .then(data => {
                 return this.delayedSave()
-                    .then(() => data)
+                    .then(() => data);
             });
     };
 
@@ -143,8 +143,8 @@ export default class PersistentStore extends Store{
             .then(() => this.applyDiff({deleted: correctDeleted}, type));
     };
 
-    _saveByType = (type) => {
-        return this.getDiff(type)
+    _saveByType = (type, ifLoaded) => {
+        return this.getDiff(type, ifLoaded)
             .then(diff => this._saveDiff(type, diff));
     };
 

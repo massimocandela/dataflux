@@ -185,8 +185,8 @@ export default class Store {
         return this._getPromise(type);
     }
 
-    getDiff (type) {
-        return this._getPromise(type)
+    getDiff (type, ifLoaded) {
+        return this._getPromise(type, ifLoaded)
             .then(() => {
                 const objects = Object.values(this.models[type].storedObjects);
 
@@ -262,7 +262,7 @@ export default class Store {
                                 if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
                                     if (force) {
                                         this.#wipe(currentObject.object);
-                                        this.#merge(currentObject.object, wrapper.toJSON())
+                                        this.#merge(currentObject.object, wrapper.toJSON());
                                         currentObject.fingerprint = newFingerprint;
                                         updated.push(currentObject.object);
 
@@ -346,14 +346,16 @@ export default class Store {
             });
     };
 
-    _getPromise (type) {
+    _getPromise (type, ifLoaded=false) {
         if (!this.models[type]) {
             return Promise.reject("The model doesn't exist");
         } else if (!this.models[type].promise && !this.options.lazyLoad) {
             return Promise.reject("The model is not loaded");
-        } else if (!this.models[type].promise && this.options.lazyLoad) {
+        } else if (!this.models[type].promise && this.options.lazyLoad && !ifLoaded) {
             return this.#loadObjects(type)
                 .then(() =>  this.models[type].promise);
+        } else if (!this.models[type].promise && this.options.lazyLoad && ifLoaded) {
+            return Promise.resolve();
         } else {
             return this.models[type].promise;
         }
