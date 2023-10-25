@@ -310,7 +310,7 @@ export default class Store {
 
     #wipe = (originalObject) => {
         for (let key in originalObject) {
-            if (key !== "id") {
+            if (key !== "id" && typeof(originalObject[key]) !== "function") {
                 delete originalObject[key];
             }
         }
