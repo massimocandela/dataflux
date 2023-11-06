@@ -43,8 +43,9 @@ export default class Model {
 
     constructor(name, options={}) {
         this.#type = name;
+
         this.options = {
-            ...options,
+            ...(typeof(options) === "object" ? options : {}) ,
             deep: options.deep ?? true,
             parseMoment: options.parseMoment ?? false,
             lazyLoad: options.lazyLoad,
@@ -118,6 +119,7 @@ export default class Model {
     setStore = (store) => {
         if (!this.#store) {
             this.#store = store;
+            this.#axios = this.options.axios || this.#store?.options?.axios || axios;
         } else {
             throw new Error("This model was already assigned to a store.");
         }

@@ -31,6 +31,7 @@ const objectStatuses = ["new", "old", "mock", "deleted"];
 export default class Store {
     constructor(options={}) {
         this.options = {
+            axios: options.axios ?? null,
             autoSave: options.autoSave ?? true,
             saveDelay: options.saveDelay || 1000,
             lazyLoad: options.lazyLoad ?? false,

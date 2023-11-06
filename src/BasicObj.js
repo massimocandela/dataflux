@@ -30,6 +30,10 @@ const globalError = "_object";
 
 export function setValues (values, model, SubObj, parent, context) {
 
+    if (!values) {
+        throw new Error(`The parameter "values" cannot be null`);
+    }
+
     Object.keys(values)
         .forEach(key => {
             const value = values[key];
