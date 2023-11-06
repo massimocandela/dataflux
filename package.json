@@ -1,6 +1,6 @@
 {
   "name": "dataflux",
-  "version": "1.13.1",
+  "version": "1.14.0",
   "description": "DataFlux, automatically interfaces with your REST APIs to create a 2-way-synced local data store. Transparently manages data propagation in the React state.",
   "main": "dist/index.js",
   "bin": "dist/index.js",
