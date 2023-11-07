@@ -149,7 +149,7 @@ export default class Model {
                     }
                 })
                 .then(data => {
-                    setValues(data, this, SubObj, null, obj);
+                    setValues(data, this, SubObj, obj, obj);
 
                     return data;
                 })
