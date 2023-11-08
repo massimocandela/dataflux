@@ -35,6 +35,7 @@
   "release-it": {
     "hooks": {
       "before:init": [
+        "npm run test",
         "npm ci"
       ],
       "after:bump": [
