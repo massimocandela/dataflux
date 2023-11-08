@@ -170,7 +170,7 @@ export default class Store {
                 }
 
                 resolve();
-            } catch(error) {
+            } catch (error) {
                 reject(error);
             }
         });
@@ -196,6 +196,7 @@ export default class Store {
                 const deleted = [];
 
                 for (let object of objects) {
+
                     if (object.status === "new") {
                         inserted.push(object);
                     } else if (object.status === "deleted") {

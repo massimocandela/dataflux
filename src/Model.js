@@ -104,6 +104,7 @@ export default class Model {
         for (let key in object) {
             if (typeof(object[key]) !== "function") {
                 if (object.getError(key)) {
+                    console.log("Model error", key, object.getError(key));
                     return false;
                 }
             }
