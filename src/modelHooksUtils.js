@@ -47,7 +47,6 @@ const getDataStringHook = (hook, data=null, axios) => {
         return axios(options)
             .then(data => data.data);
     } else if (batch) {
-        console.log("here");
         return axios({
             ...options,
             data: [data].flat()
