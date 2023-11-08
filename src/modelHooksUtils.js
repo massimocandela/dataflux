@@ -28,6 +28,7 @@ import batchPromises from "batch-promises";
 const getDataStringHook = (hook, data=null, axios) => {
 
     const batch = hook.batch ?? false;
+
     const options = {
         url: hook.url,
         method: (hook.method || "get").toLowerCase(),
@@ -46,9 +47,10 @@ const getDataStringHook = (hook, data=null, axios) => {
         return axios(options)
             .then(data => data.data);
     } else if (batch) {
+        console.log("here");
         return axios({
             ...options,
-            data
+            data: [data].flat()
         })
             .then(data => data.data);
     } else {
@@ -87,6 +89,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
                 return {
                     method: defaultMethod,
                     url: defaultUrl,
+                    ...options,
                     fields: options.fields || [],
                     headers: options.headers || {}
                 };
@@ -99,6 +102,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
                     return {
                         method: defaultMethod,
                         url: res,
+                        ...options,
                         fields: options.fields || [],
                         headers: options.headers || {}
                     };
@@ -110,6 +114,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
             return {
                 method: optionItem.method || defaultMethod,
                 url: optionItem.url || defaultUrl,
+                ...options,
                 fields: options.fields || [],
                 headers: optionItem.headers || options.headers || {}
             };
