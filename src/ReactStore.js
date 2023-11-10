@@ -47,10 +47,12 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, false);
 
         const subKey = this.subscribe(type, data => {
-            context.setState({
-                ...context.state,
-                [stateAttribute]: data || []
-            });
+            if (context._isMounted === undefined || context._isMounted) {
+                context.setState({
+                    ...context.state,
+                    [stateAttribute]: data || []
+                });
+            }
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
@@ -60,10 +62,12 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, true);
 
         const subKey = this.subscribe(type, data => {
-            context.setState({
-                ...context.state,
-                [stateAttribute]: data && data.length ? data[0] : null
-            });
+            if (context._isMounted === undefined || context._isMounted) {
+                context.setState({
+                    ...context.state,
+                    [stateAttribute]: data && data.length ? data[0] : null
+                });
+            }
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
