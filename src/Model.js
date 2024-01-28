@@ -23,7 +23,7 @@
  */
 
 import {executeHook, getHooksFromOptions, getHooksFromUrl} from "./modelHooksUtils";
-import axios from "axios";
+import axios from "redaxios";
 import {setValues} from "./BasicObj";
 import SubObj from "./SubObj";
 
