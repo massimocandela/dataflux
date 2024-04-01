@@ -179,7 +179,7 @@ export default class Store {
     hasChanged (type, object) {
         const obj = this.models[type].storedObjects[object.getId()];
 
-        return obj.fingerprint !== obj.object.getFingerprint();
+        return !obj || obj.fingerprint !== obj.object.getFingerprint();
     };
 
     preload(type){
