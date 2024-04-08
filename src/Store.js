@@ -25,6 +25,8 @@
 import Obj from "./Obj";
 import PubSub from "./PubSub";
 import batchPromises from "batch-promises";
+import SubObj from './SubObj';
+import {setValues} from './BasicObj';
 
 const objectStatuses = ["new", "old", "mock", "deleted"];
 
@@ -305,9 +307,8 @@ export default class Store {
     };
 
     #merge = (originalObject, newObject) => {
-        for (let key in newObject) {
-            originalObject[key] = newObject[key];
-        }
+
+        setValues(newObject, originalObject.getModel(), SubObj, originalObject, originalObject);
     };
 
     #wipe = (originalObject) => {
