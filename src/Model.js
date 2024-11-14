@@ -41,17 +41,17 @@ export default class Model {
     #loadFunction;
     #hiddenFields;
 
-    constructor(name, options={}) {
+    constructor(name, options={}, defaults={}) {
         this.#type = name;
 
         this.options = {
             ...(typeof(options) === "object" ? options : {}) ,
-            deep: options.deep ?? true,
-            parseMoment: options.parseMoment ?? false,
-            lazyLoad: options.lazyLoad,
-            validate: options.validate ?? {},
-            autoSave: options.autoSave ?? null,
-            autoRefresh: options.autoRefresh ?? false
+            deep: options.deep ?? defaults.deep ?? true,
+            parseMoment: options.parseMoment ?? defaults.parseMoment ?? false,
+            lazyLoad: options.lazyLoad ?? defaults.lazyLoad,
+            validate: options.validate ?? defaults.validate ?? {},
+            autoSave: options.autoSave ?? defaults.autoSave ?? null,
+            autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false
         };
         this.#store = null;
         this.#includes = {};
