@@ -71,7 +71,7 @@ export default class PersistentStore extends Store{
             clearTimeout(this._delayedSaveTimer);
         }
 
-        return Promise.all(Object.keys(this.models).map(i => this._saveByType(i, true)))
+        return Promise.all(Object.keys(this.models).filter(m => this.models[m].model.options.autoSave !== false).map(i => this._saveByType(i, true)))
             .then(data => {
                 this._busy = false;
                 this.pubSub.publish("save", "end");

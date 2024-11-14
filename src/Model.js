@@ -50,6 +50,7 @@ export default class Model {
             parseMoment: options.parseMoment ?? false,
             lazyLoad: options.lazyLoad,
             validate: options.validate ?? {},
+            autoSave: options.autoSave ?? null,
             autoRefresh: options.autoRefresh ?? false
         };
         this.#store = null;
