@@ -71,6 +71,7 @@ const setFields = (options, hook) => {
     options.headers['X-Fields'] = hook.fields;
 
     options.url = brembo.build(options.url, {
+        canonical: true,
         params: {
             fields: hook.fields.join(",")
         }
