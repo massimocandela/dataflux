@@ -51,7 +51,9 @@ export default class Model {
             lazyLoad: options.lazyLoad ?? defaults.lazyLoad,
             validate: options.validate ?? defaults.validate ?? {},
             autoSave: options.autoSave ?? defaults.autoSave ?? null,
-            autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false
+            autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false,
+            pre: options.pre ?? defaults.pre ?? null,
+            post: options.post ?? defaults.post ?? null
         };
         this.#store = null;
         this.#includes = {};
@@ -221,7 +223,8 @@ export default class Model {
                 }
 
                 return this.#toArray(data);
-            });
+            })
+            .then(data => this.options?.pre ? data.map(this.options.pre) : data);
     };
 
     insertObjects = (objects) => {
@@ -291,7 +294,9 @@ export default class Model {
     };
 
     #unWrap = (objects) => {
-        const data = Object.values(objects).map(object => this.#removeHiddenFields(object.toJSON()));
+        const data = Object.values(objects)
+            .map(object => this.#removeHiddenFields(object.toJSON()))
+            .map(object => this.options?.post ? this.options.post(object) : object);
         if (data.value != null && Object.keys(data).length === 1) {
             return data.value;
         } else if (Array.isArray(data) && data.length === 1 && data[0].value != null && Object.keys(data[0]).length === 1) {

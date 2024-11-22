@@ -207,6 +207,19 @@ describe("Store and models creation", function() {
             update: (data) => {
                 updated = data;
             },
+            pre: i => {
+                i.potato = 1;
+                return i;
+            },
+            post: i => {
+                expect(i).to.deep.equals({
+                    ...i,
+                    potato: 1
+                });
+
+                i.potato = 2;
+                return i;
+            },
             validate: {
                 isbn: ({isbn}) => {
                     if (typeof(isbn) !== "number") {
@@ -238,6 +251,7 @@ describe("Store and models creation", function() {
                         } else {
                             expect(updated).to.deep.equals([{
                                 isbn: 123,
+                                potato: 2,
                                 title: 'Eloquent JavaScript, Third Edition',
                                 authorId: 0,
                                 pages: 472
