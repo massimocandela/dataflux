@@ -179,9 +179,18 @@ export default class Store {
     };
 
     hasChanged (type, object) {
-        const obj = this.models[type].storedObjects[object.getId()];
 
-        return !obj || obj.fingerprint !== obj.object.getFingerprint();
+        const _hasChanged = (type, object) => {
+            const obj = this.models[type].storedObjects[object.getId()];
+
+            return !obj || obj.fingerprint !== obj.object.getFingerprint();
+        }
+
+        if (object) {
+            return _hasChanged(type, object);
+        } else {
+            return Object.values(this.models[type].storedObjects).some(i => _hasChanged(type, i));
+        }
     };
 
     preload(type){
