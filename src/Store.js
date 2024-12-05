@@ -189,7 +189,7 @@ export default class Store {
         if (object) {
             return _hasChanged(type, object);
         } else {
-            return Object.values(this.models[type].storedObjects).some(i => _hasChanged(type, i));
+            return Object.values(this.models[type].storedObjects).some(i => _hasChanged(type, i.object));
         }
     };
 
