@@ -29,6 +29,17 @@ export default class ReactStore extends ObserverStore {
         super(options);
     };
 
+    didUpdate = (context) => {
+        const objects = Object.values((context?.props ?? {})).filter(i => i.isDataflux());
+        const _f = objects.map(i => i.getFingerprint()).join(".");
+
+        if (_f !== context.___obs_f) {
+            context.forceUpdate();
+        }
+
+        context.___obs_f = _f;
+    }
+
     #addSubscriptionToContext = (context, subKey) => { // I know...
         context.___obs_subkeys = context.___obs_subkeys || [];
         context.___obs_subkeys.push(subKey);

@@ -61,6 +61,8 @@ export class BasicObj {
         this.#model = model;
     };
 
+    isDataflux = () => true;
+
     setId = (id) => {
         this.id = id;
     };

@@ -6,15 +6,21 @@ const expect = chai.expect;
 
 const fakeReactComponent = function (){
     this.state = {};
+    this.props = {};
     this.render = null;
     this.componentDidMount = () => true;
+    this.componentDidUpdate = () => true;
     this.setState = (data) => {
         this.state = data;
-        this.render(this.state);
+        this.render(this.state, this.props);
     };
+    this.forceUpdate = () => {
+        this.render(this.state, this.props);
+    }
     this.componentWillUnmount = null;
 
-    setTimeout(() => this.componentDidMount(), 1000)
+    setTimeout(() => this.componentDidMount(), 1000);
+    setInterval(() => this.componentDidUpdate(), 5000);
 };
 
 describe("Store React", function() {
@@ -195,5 +201,33 @@ describe("Store React", function() {
         };
 
     }).timeout(10000);
+
+    it ("props - component did update", function (done) {
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+        const component = new fakeReactComponent();
+        const subcomponent = new fakeReactComponent();
+
+        subcomponent.componentDidUpdate = () => {
+            store.didUpdate(subcomponent);
+        }
+        subcomponent.render = (state, props) => {
+            expect(props.book.name).to.equal("pedro");
+            done();
+        }
+
+        component.render = (state, props) => {
+            subcomponent.props = {
+                book: state.book
+            }
+        }
+
+        component.componentDidMount = () => {
+            store.findOne("book", "book", component);
+            setTimeout(() => component.state.book.set("name", "pedro"), 3000)
+        };
+    }).timeout(60000);
 
 });
