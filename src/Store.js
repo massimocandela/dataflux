@@ -180,6 +180,10 @@ export default class Store {
 
     hasChanged (type, object) {
 
+        if (!this.models[type]) {
+            throw new Error("Not valid model type");
+        }
+
         const _hasChanged = (type, object) => {
             const obj = this.models[type].storedObjects[object.getId()];
 
