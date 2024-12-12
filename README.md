@@ -254,6 +254,70 @@ function MyComponent() {
 }
 ```
 
+### Example 7 - React props and observability
+
+If you pass an object as a prop to a React component, the component will not refresh if the object changes.
+
+```jsx
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    store.findAll("book", "books", this, ({price}) => price < 20);
+  }
+
+  render(){
+    const {books} = this.state;
+
+    return books.map(book =>
+            <BookView
+                    // key={book.getFingerprint()}
+                    book={book}
+            />);
+  }
+}
+
+class BookView extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  
+  render(){
+    const {book} = this.props;
+
+    return <div>book.price</div>;
+  }
+}
+
+
+
+```
+If you now do `books[0].set("price", 18)`, the BookView object will not update the price. You could address this by adding a `key={book.getFingerprint()}` prop. However, this approach forces the mounting of the component at every object change.
+
+A better approach is to use the method `didUpdate()` inside `componentDidUpdate` to check if any of the objects in the props changed. 
+
+```jsx
+class BookView extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidUpdate() {
+    store.didUpdate(this);
+  }
+  
+  render(){
+    const {book} = this.props;
+
+    return <div>book.price</div>;
+  }
+}
+```
+
+Without further changes to the code, the new `book.price` will be rendered when the book object in the props is edited.
+
 
 ## Configuration
 
@@ -576,6 +640,7 @@ The store has the following method.
 | reset(type)                                            | This method syncs all the objects in the store with the remote version offered by the REST APIs (`remote -> local`). Remote changes are applied locally, including adding/removing objects. Objects edited locally but not yet persisted are reverted to the corresponding remote object. If a model type is passed, only objects of that type will be reset.                                                                                       |
 | findSync(type, filterFunction)                         | This method returns the objects in a synchronous way (no Promise). However, *it works only if you already performed an async operation (e.g., like refresh, load, find, subscribe) or if you set lazyLoad to false and the store had enough time to load.*                                                                                                                                                                                          |
 | hasChanged(type, object)                               | This method receives in input a model type and an object (optional). It returns a boolean, `true` if the object is dirty (it changed but it has not yet being persisted). If the object is not passed, the method checks if any of the objects of the specified model type has changed.                                                                                                                                                             |
+| didUpdate(context)                                     | If you pass an object as a prop to a React component, the component will not refresh if the object changes. To address this, you can use this method inside the `componentDidUpdate` to check if any of the objects changed. See [example 6](#example-7---react-props-and-observability)                                                                                                                                                            |
 
 ### Insert vs. Mock
 
@@ -631,6 +696,7 @@ Each object created is enriched with the following methods.
 | getError()                         | If an operation on an object triggers an error, this error can be retrieved with `getError()`. This allows to observe specific objects' errors, instead of the generic `store.on("error", ...)`.                                                                                                                                                                    |
 | getError(attributeName)            | This method allows you to check if the specificed attribute generated any error according to the validation property specified in the model. See [objects validation](#objects-validation).                                                                                                                                                                         | 
 | setError(error)                    | Additionally to DataFlux's errors, you can trigger your own errors with this method. Other components observing this objet's error will be notified.                                                                                                                                                                                                                |
+| isDataflux()                       | This method returns true for all dataflux objects.                                                                                                                                                                                                                                                                                                                  |
 
 ### Deep Objects
 When a model is declared with the option `deep: true` (default, see [model creation](#models-creation)), all the sub objects will also offer many of the methods above.
@@ -718,7 +784,7 @@ class MyComponent extends React.Component {
     return <TextField
             value={book.title}
             onChange={store.handleChange(book, "title")}
-            error={object.getError("title")} 
+            error={object.getError("title")}
             // E.g., in material UI the test field will be red in case of errors
     />;
   }
