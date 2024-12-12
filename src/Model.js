@@ -224,7 +224,7 @@ export default class Model {
 
                 return this.#toArray(data);
             })
-            .then(data => this.options?.pre ? data.map(this.options.pre) : data);
+            .then(data => this.options?.pre ? data.map(n => this.options.pre(n, data)) : data);
     };
 
     insertObjects = (objects) => {
@@ -294,9 +294,10 @@ export default class Model {
     };
 
     #unWrap = (objects) => {
-        const data = Object.values(objects)
+        const arrayObjects = Object.values(objects);
+        const data = arrayObjects
             .map(object => this.#removeHiddenFields(object.toJSON()))
-            .map(object => this.options?.post ? this.options.post(object) : object);
+            .map(object => this.options?.post ? this.options.post(object, arrayObjects) : object);
         if (data.value != null && Object.keys(data).length === 1) {
             return data.value;
         } else if (Array.isArray(data) && data.length === 1 && data[0].value != null && Object.keys(data[0]).length === 1) {
