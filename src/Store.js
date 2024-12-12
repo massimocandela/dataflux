@@ -178,11 +178,15 @@ export default class Store {
         });
     };
 
-    hasChanged (type, object) {
-
+    _validateTypeInput = (type) => {
         if (!this.models[type]) {
             throw new Error("Not valid model type");
         }
+    }
+
+    hasChanged (type, object) {
+
+        this._validateTypeInput(type);
 
         const _hasChanged = (type, object) => {
             const obj = this.models[type].storedObjects[object.getId()];
@@ -224,6 +228,8 @@ export default class Store {
     }
 
     getDiff (type, ifLoaded) {
+        this._validateTypeInput(type);
+
         return this._getPromise(type, ifLoaded)
             .then(() => this._getDiffSync(type));
     };
@@ -394,8 +400,10 @@ export default class Store {
         }
 
         if (status === "mock") {
+            wrapper.isMock = () => true;
             wrapper.insert = () => {
                 this.models[type].storedObjects[id].status = "new";
+                wrapper.isMock = () => false;
                 this.update([wrapper]);
                 delete wrapper.insert;
             };
@@ -425,4 +433,14 @@ export default class Store {
 
         return item.promise;
     };
+
+    getCollection (type) {
+        return this._getPromise(type)
+            .then(() => {
+                return Object.values(this.models[type].storedObjects)
+                    .map(i => i.object)
+                    .sort((a, b) => a.getId().localeCompare(b.getId()))
+                    .map(i => i.toJSON());
+            });
+    }
 }

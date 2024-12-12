@@ -112,4 +112,13 @@ describe("Store find", function () {
             });
     }).timeout(10000);
 
+
+    it("getCollection", function (done) {
+       store.getCollection("author")
+           .then(collection => {
+               expect(collection.map(i => expectedAuthors.find(n => n.id === i.id)).filter(i => !i).length).to.equal(0);
+               done();
+           });
+
+    }).timeout(10000);
 });

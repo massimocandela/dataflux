@@ -63,6 +63,8 @@ export class BasicObj {
 
     isDataflux = () => true;
 
+    isMock = () => false;
+
     setId = (id) => {
         this.id = id;
     };
