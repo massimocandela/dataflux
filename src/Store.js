@@ -193,7 +193,8 @@ export default class Store {
         if (object) {
             return _hasChanged(type, object);
         } else {
-            return Object.values(this.models[type].storedObjects).some(i => _hasChanged(type, i.object));
+            const {inserted, updated, deleted} = this._getDiffSync(type);
+            return [inserted, updated, deleted].some(i => i.length > 0);
         }
     };
 
@@ -201,28 +202,30 @@ export default class Store {
         return this._getPromise(type);
     }
 
+    _getDiffSync = (type) => {
+        const objects = Object.values(this.models[type].storedObjects);
+
+        const inserted = [];
+        const updated = [];
+        const deleted = [];
+
+        for (let object of objects) {
+
+            if (object.status === "new") {
+                inserted.push(object);
+            } else if (object.status === "deleted") {
+                deleted.push(object);
+            } else if (object.status === "old" && this.hasChanged(type, object.object)) {
+                updated.push(object);
+            } // Nothing for mock objects
+        }
+
+        return { inserted, updated, deleted };
+    }
+
     getDiff (type, ifLoaded) {
         return this._getPromise(type, ifLoaded)
-            .then(() => {
-                const objects = Object.values(this.models[type].storedObjects);
-
-                const inserted = [];
-                const updated = [];
-                const deleted = [];
-
-                for (let object of objects) {
-
-                    if (object.status === "new") {
-                        inserted.push(object);
-                    } else if (object.status === "deleted") {
-                        deleted.push(object);
-                    } else if (object.status === "old" && this.hasChanged(type, object.object)) {
-                        updated.push(object);
-                    } // Nothing for mock objects
-                }
-
-                return { inserted, updated, deleted };
-            });
+            .then(() => this._getDiffSync(type));
     };
 
     factory (type, params) {

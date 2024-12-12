@@ -230,4 +230,26 @@ describe("Store React", function() {
         };
     }).timeout(60000);
 
+    it ("hasChanged - test diff", function (done) {
+        let once = false;
+        const store = createTestStore({
+            autoSave: false,
+            lazyLoad: true
+        });
+        const component = new fakeReactComponent();
+
+        component.render = (state, props) => {
+            if (store.hasChanged("book") && !once) { // I just need to check that it becomes true at some point
+                expect(store.hasChanged("book")).to.equal(true);
+                done();
+                once = true;
+            }
+        }
+
+        component.componentDidMount = () => {
+            store.findOne("book", "book", component);
+            setTimeout(() => component.state.book.set("name", "pedro"), 3000);
+        };
+    }).timeout(30000);
+
 });
