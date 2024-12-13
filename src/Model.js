@@ -274,6 +274,12 @@ export default class Model {
             delete json[attribute];
         }
 
+        for (let obj of Object.values(json)) {
+            if (typeof(obj) === "object") {
+                this.#removeHiddenFields(obj);
+            }
+        }
+
         return json;
     };
 
