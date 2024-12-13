@@ -30,7 +30,7 @@ export default class ReactStore extends ObserverStore {
     };
 
     didUpdate = (context) => {
-        const objects = Object.values((context?.props ?? {})).filter(i => i.isDataflux());
+        const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
         const _f = objects.map(i => i.getFingerprint()).join(".");
 
         if (_f !== context.___obs_f) {
