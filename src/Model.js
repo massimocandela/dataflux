@@ -53,12 +53,13 @@ export default class Model {
             autoSave: options.autoSave ?? defaults.autoSave ?? null,
             autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false,
             pre: options.pre ?? defaults.pre ?? null,
+            hiddenFields: options.hiddenFields ?? defaults.hiddenFields ?? [],
             post: options.post ?? defaults.post ?? null
         };
         this.#store = null;
         this.#includes = {};
         this.#axios = this.options.axios || axios;
-        this.#hiddenFields = this.options.hiddenFields || [];
+        this.#hiddenFields = this.options.hiddenFields;
         this.#loadFunction = this.options.load || null;
 
         if (!name || !options) {
@@ -270,7 +271,7 @@ export default class Model {
     };
 
     #removeHiddenFields = (json) => {
-        for (let attribute of this.#hiddenFields ?? []) {
+        for (let attribute of this?.#hiddenFields ?? []) {
             delete json[attribute];
         }
 
