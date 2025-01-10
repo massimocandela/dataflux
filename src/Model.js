@@ -37,15 +37,15 @@ export default class Model {
     #deleteHook;
     #singleItemQuery;
     #batchSize;
-    #axios
+    #axios;
     #loadFunction;
     #hiddenFields;
 
-    constructor(name, options={}, defaults={}) {
+    constructor(name, options = {}, defaults = {}) {
         this.#type = name;
 
         this.options = {
-            ...(typeof(options) === "object" ? options : {}) ,
+            ...(typeof (options) === "object" ? options : {}),
             deep: options.deep ?? defaults.deep ?? true,
             parseMoment: options.parseMoment ?? defaults.parseMoment ?? false,
             lazyLoad: options.lazyLoad ?? defaults.lazyLoad,
@@ -65,11 +65,11 @@ export default class Model {
             throw new Error("A Model requires at least a name and a hook");
         }
 
-        if (this.#loadFunction && typeof(this.#loadFunction) !== "function") {
+        if (this.#loadFunction && typeof (this.#loadFunction) !== "function") {
             throw new Error("The load option must be a function");
         }
 
-        const [retrieveHook, insertHook, updateHook, deleteHook] = (typeof(options) === "object") ?
+        const [retrieveHook, insertHook, updateHook, deleteHook] = (typeof (options) === "object") ?
             getHooksFromOptions(options) : getHooksFromUrl(options);
 
         this.#retrieveHook = retrieveHook;
@@ -80,8 +80,8 @@ export default class Model {
         this.#singleItemQuery = false; // By default use arrays
         this.#batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
 
-        if (this.options.autoRefresh && typeof(this.options.autoRefresh) === "number") {
-            setInterval(() => {this.getStore().refresh(this.#type)}, this.options.autoRefresh);
+        if (this.options.autoRefresh && typeof (this.options.autoRefresh) === "number") {
+            setInterval(() => {this.getStore().refresh(this.#type);}, this.options.autoRefresh);
         }
     };
 
@@ -105,7 +105,7 @@ export default class Model {
 
     isObjectValid = (object) => {
         for (let key in object) {
-            if (typeof(object[key]) !== "function") {
+            if (typeof (object[key]) !== "function") {
                 if (object.getError(key)) {
                     console.log("Model error", key, object.getError(key));
                     return false;
@@ -141,7 +141,7 @@ export default class Model {
                 .then(() => {
                     const res = this.#loadFunction(obj.toJSON()); // toJSON to avoid side effects;
 
-                    if (typeof(res) === "string") {
+                    if (typeof (res) === "string") {
                         return this.#axios({
                             method: "get",
                             url: res,
@@ -166,7 +166,7 @@ export default class Model {
         }
     };
 
-    #error (error) {
+    #error(error) {
         error = error.message || error;
         this.getStore().pubSub.publish("error", error);
         return Promise.reject(error);
@@ -177,9 +177,9 @@ export default class Model {
         if (model) {
             this.getStore().validateModel(model);
 
-            if (typeof(param2) === "string" && (!param3 || typeof(param3) === "string")) { // explicit model, from, to
+            if (typeof (param2) === "string" && (!param3 || typeof (param3) === "string")) { // explicit model, from, to
                 return this.#addRelationByField(model, param2, param3);
-            } else if (!param3 && typeof(param2) === "function") { // explicit model, filterFunction
+            } else if (!param3 && typeof (param2) === "function") { // explicit model, filterFunction
                 return this.#addRelationByFilter(model, param2);
             } else if (!param2 && !param3) { // implicit model, from, to (it uses the type as local key and the id as remote key)
                 return this.#addRelationByField(model, model.getType(), "id");
@@ -204,7 +204,7 @@ export default class Model {
                     return this.getStore()
                         .find(includedType, (item) => filterRelation(parentObject, item))
                         .then(data => filterFunction ? data.filter(filterFunction) : data);
-                })
+                });
 
         } else {
             return this.#error("The relation doesn't exist");
@@ -254,7 +254,7 @@ export default class Model {
         }
     };
 
-    #addRelationByField = (model, localField, remoteField="id") => {
+    #addRelationByField = (model, localField, remoteField = "id") => {
 
         const filterFunction = (parentObject, child) => {
             return parentObject[localField] === child[remoteField];
@@ -270,13 +270,15 @@ export default class Model {
     };
 
     #removeHiddenFields = (json) => {
-        for (let attribute of this.#hiddenFields) {
+        for (let attribute of this.#hiddenFields ?? []) {
             delete json[attribute];
         }
 
-        for (let obj of Object.values(json)) {
-            if (typeof(obj) === "object") {
-                this.#removeHiddenFields(obj);
+        if (json && typeof (json) === "object") {
+            for (let obj of Object.values(json)) {
+                if (typeof (obj) === "object") {
+                    this.#removeHiddenFields(obj);
+                }
             }
         }
 
@@ -285,13 +287,13 @@ export default class Model {
 
     #toArray = (data) => {
         if (Array.isArray(data)) {
-            if (data.length && data.every(str => ["string", "number"].includes(typeof(str)))) {
+            if (data.length && data.every(str => ["string", "number"].includes(typeof (str)))) {
                 return [{value: data}];
             } else {
                 return data;
             }
         } else {
-            if (["string", "number"].includes(typeof(data))) {
+            if (["string", "number"].includes(typeof (data))) {
                 return [{value: data}];
             } else {
                 return [data];
@@ -334,7 +336,7 @@ export default class Model {
     #assignId = (data, objects) => {
         if (Array.isArray(data) && Array.isArray(objects) && objects.length === data.length) {
 
-            for (let i=0; i < data.length; i++){
+            for (let i = 0; i < data.length; i++) {
                 setValues(data[i], this, SubObj, null, objects[i]);
                 objects[i].setId(data[i].id);
 
