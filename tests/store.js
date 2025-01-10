@@ -22,7 +22,7 @@ const apiAnswer = (fields, file) => {
         } else {
             return item;
         }
-    })
+    });
 
     return Promise.resolve(filtered);
 };
@@ -30,7 +30,7 @@ const apiAnswer = (fields, file) => {
 console.warn = () => {}; // Shut up
 
 
-const createTestStore  = (options) => {
+const createTestStore = (options) => {
 
     const store = new Store(options);
 
@@ -67,7 +67,7 @@ const createTestStore  = (options) => {
     book.addRelation(author2, ({authorId}, {id}) => id === authorId);
 
     return store;
-}
+};
 
 const expectedBooks = JSON.parse(fs.readFileSync(booksFile, "utf-8"));
 const expectedAuthors = JSON.parse(fs.readFileSync(authorsFile, "utf-8"));

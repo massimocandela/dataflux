@@ -25,14 +25,14 @@
 import brembo from "brembo";
 import batchPromises from "batch-promises";
 
-const getDataStringHook = (hook, data=null, axios) => {
+const getDataStringHook = (hook, data = null, axios) => {
 
     const batch = hook.batch ?? false;
 
     const options = {
         url: hook.url,
         method: (hook.method || "get").toLowerCase(),
-        reponseType: 'json'
+        reponseType: "json"
     };
 
     if (hook.headers) {
@@ -68,7 +68,7 @@ const getDataStringHook = (hook, data=null, axios) => {
 
 const setFields = (options, hook) => {
     options.headers = options.headers || {};
-    options.headers['X-Fields'] = hook.fields;
+    options.headers["X-Fields"] = hook.fields;
 
     options.url = brembo.build(options.url, {
         canonical: true,
@@ -76,13 +76,13 @@ const setFields = (options, hook) => {
             fields: hook.fields.join(",")
         }
     });
-}
+};
 
 const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
-    switch(typeof(optionItem)) {
+    switch (typeof (optionItem)) {
         case "undefined":
             if (!defaultUrl) {
-                console[console.warn?"warn":"log"](`The ${defaultMethod} operations will not work, there is no valid url or function for it.`);
+                console[console.warn ? "warn" : "log"](`The ${defaultMethod} operations will not work, there is no valid url or function for it.`);
 
                 return () => Promise.resolve([]);
             } else {
@@ -98,7 +98,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
             return (data) => {
                 const res = optionItem(data);
 
-                if (typeof(res) === "string") {
+                if (typeof (res) === "string") {
                     return {
                         method: defaultMethod,
                         url: res,
@@ -109,7 +109,7 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
                 } else {
                     return Promise.resolve(res);
                 }
-            }
+            };
         case "object":
             return {
                 method: optionItem.method || defaultMethod,
@@ -121,10 +121,10 @@ const createHookItem = (optionItem, defaultMethod, defaultUrl, options) => {
         default:
             throw new Error(`Invalid ${defaultMethod} configuration`);
     }
-}
+};
 
 export const getHooksFromOptions = (options) => {
-    const defaultUrl = typeof(options.retrieve) === "function" ? null : options.retrieve.url;
+    const defaultUrl = typeof (options.retrieve) === "function" ? null : options.retrieve.url;
 
     return [
         createHookItem(options.retrieve, "get", defaultUrl, options),
@@ -178,4 +178,4 @@ export const executeHook = (type, hook, data, axios) => {
     } catch (e) {
         return Promise.reject(e);
     }
-}
+};

@@ -34,7 +34,7 @@ export default class PubSub {
 
     publish = (channel, content) => {
         for (let clb of this.callbacks[channel] || []) {
-            new Promise(function(resolve, reject){
+            new Promise(function (resolve, reject) {
                 clb(content, channel);
                 resolve(true);
             })

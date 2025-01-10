@@ -38,7 +38,7 @@ export default class ReactStore extends ObserverStore {
         }
 
         context.___obs_f = _f;
-    }
+    };
 
     #addSubscriptionToContext = (context, subKey) => { // I know...
         context.___obs_subkeys = context.___obs_subkeys || [];
@@ -48,11 +48,11 @@ export default class ReactStore extends ObserverStore {
             for (let key of context.___obs_subkeys || []) {
                 context.___obs_unsubscribe_context.unsubscribe(key);
             }
-        }
+        };
         context.componentWillUnmount = function () {
             context.___obs_unsubscribe();
-        }
-    }
+        };
+    };
 
     findAll(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, false);
@@ -84,7 +84,7 @@ export default class ReactStore extends ObserverStore {
         this.#addSubscriptionToContext(context, subKey);
     };
 
-    #fixState (stateAttribute, context, one) {
+    #fixState(stateAttribute, context, one) {
         if (!context[stateAttribute]) {
             context[stateAttribute] = one ? null : []; // side effect on state
         }
@@ -95,7 +95,7 @@ export default class ReactStore extends ObserverStore {
             const value = event ? (event.target.type === "checkbox" ? event.target.checked : event.target.value) : "";
             const finalValue = value ?? rawValue;
             object.set(name, cast && finalValue != null ? cast(finalValue) : finalValue);
-        }
+        };
     };
 
 }

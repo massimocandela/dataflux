@@ -24,14 +24,14 @@
 
 import Store from "./Store";
 
-export default class PersistentStore extends Store{
+export default class PersistentStore extends Store {
     constructor(options) {
         super(options);
         this._busy = false;
         this._delayedSaveTimer = null;
         this._delayedSavePromise = null;
 
-        if (typeof(this.options.autoSave) === "number") {
+        if (typeof (this.options.autoSave) === "number") {
             setInterval(() => {
                 if (!this._busy) {
                     this.delayedSave();
@@ -51,12 +51,12 @@ export default class PersistentStore extends Store{
 
     whenSaved = (type) => {
         return this.getDiff(type)
-            .then(({ inserted, updated, deleted }) => {
+            .then(({inserted, updated, deleted}) => {
 
                 if (inserted.length === 0 && updated.length === 0 && deleted.length === 0) {
                     return true;
-                } else if (this.options.autoSave){
-                    return this._saveDiff(type, { inserted, updated, deleted });
+                } else if (this.options.autoSave) {
+                    return this._saveDiff(type, {inserted, updated, deleted});
                 } else {
                     return Promise.reject("Save must be invoked manually");
                 }
@@ -102,7 +102,7 @@ export default class PersistentStore extends Store{
         return super.delete(typeOrObjects, filterFunction)
             .then(data => {
                 return this.delayedSave()
-                    .then(() => data)
+                    .then(() => data);
             });
     };
 
@@ -169,6 +169,6 @@ export default class PersistentStore extends Store{
             }
         });
     };
-    
+
 
 }

@@ -25,13 +25,13 @@
 import Obj from "./Obj";
 import PubSub from "./PubSub";
 import batchPromises from "batch-promises";
-import SubObj from './SubObj';
-import {setValues} from './BasicObj';
+import SubObj from "./SubObj";
+import {setValues} from "./BasicObj";
 
 const objectStatuses = ["new", "old", "mock", "deleted"];
 
 export default class Store {
-    constructor(options={}) {
+    constructor(options = {}) {
         this.options = {
             axios: options.axios ?? null,
             autoSave: options.autoSave ?? true,
@@ -55,13 +55,13 @@ export default class Store {
     validateModel(model) {
         const type = model.getType();
 
-        if (typeof(type) !== "string" || type === "") {
+        if (typeof (type) !== "string" || type === "") {
             throw new Error("Not valid model object: type missing");
         }
 
     };
 
-    addModel (model) {
+    addModel(model) {
         return new Promise((resolve, reject) => {
             this.validateModel(model);
 
@@ -88,12 +88,12 @@ export default class Store {
         });
     };
 
-    update (objects) {
+    update(objects) {
         return Promise.resolve(objects); // Nothing to do at this level
     };
 
-    delete (typeOrObjects, filterFunction) {
-        if (typeof(typeOrObjects) === "string" && typeof(filterFunction) === "function") {
+    delete(typeOrObjects, filterFunction) {
+        if (typeof (typeOrObjects) === "string" && typeof (filterFunction) === "function") {
             const type = typeOrObjects;
             return this.#deleteByFilter(type, filterFunction);
         } else if (Array.isArray(typeOrObjects) && typeOrObjects.length && !filterFunction) {
@@ -107,17 +107,17 @@ export default class Store {
         }
     };
 
-    insert (type, objects) {
+    insert(type, objects) {
         return this._getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, "new")));
     };
 
-    mock (type, objects) {
+    mock(type, objects) {
         return this._getPromise(type)
             .then(() => objects.map(object => this.#insertObject(type, object, "mock")));
     };
 
-    get (type, id) {
+    get(type, id) {
         return this._getPromise(type)
             .then(() => {
                 try {
@@ -134,9 +134,9 @@ export default class Store {
             .map(i => i.object);
 
         return filterFunction ? all.filter(filterFunction) : all;
-    }
+    };
 
-    find (type, filterFunction) {
+    find(type, filterFunction) {
         return this._getPromise(type)
             .then(() => this.findSync(type, filterFunction))
             .catch(error => {
@@ -146,7 +146,7 @@ export default class Store {
             });
     };
 
-    applyDiff ({inserted=[], updated=[], deleted=[]}, type) {
+    applyDiff({inserted = [], updated = [], deleted = []}, type) {
         return new Promise((resolve, reject) => {
             try {
 
@@ -182,9 +182,9 @@ export default class Store {
         if (!this.models[type]) {
             throw new Error("Not valid model type");
         }
-    }
+    };
 
-    hasChanged (type, object) {
+    hasChanged(type, object) {
 
         this._validateTypeInput(type);
 
@@ -192,7 +192,7 @@ export default class Store {
             const obj = this.models[type].storedObjects[object.getId()];
 
             return !obj || obj.fingerprint !== obj.object.getFingerprint();
-        }
+        };
 
         if (object) {
             return _hasChanged(type, object);
@@ -202,7 +202,7 @@ export default class Store {
         }
     };
 
-    preload(type){
+    preload(type) {
         return this._getPromise(type);
     }
 
@@ -224,17 +224,17 @@ export default class Store {
             } // Nothing for mock objects
         }
 
-        return { inserted, updated, deleted };
-    }
+        return {inserted, updated, deleted};
+    };
 
-    getDiff (type, ifLoaded) {
+    getDiff(type, ifLoaded) {
         this._validateTypeInput(type);
 
         return this._getPromise(type, ifLoaded)
             .then(() => this._getDiffSync(type));
     };
 
-    factory (type, params) {
+    factory(type, params) {
         const item = this.models[type];
         this.pubSub.publish("loading", {status: "start", model: type});
         item.promise = item.model.factory(params)
@@ -248,7 +248,7 @@ export default class Store {
         return item.promise;
     };
 
-    refreshObjectByType = (type, force=false) => {
+    refreshObjectByType = (type, force = false) => {
         return this._getPromise(type)
             .then(() => {
                 const item = this.models[type];
@@ -297,7 +297,7 @@ export default class Store {
                                         // Nothing for now
 
                                     } else { // Update with the new object
-                                        this.#merge(currentObject.object, wrapper.toJSON())
+                                        this.#merge(currentObject.object, wrapper.toJSON());
                                         currentObject.fingerprint = newFingerprint;
                                         updated.push(currentObject.object);
                                     }
@@ -335,13 +335,13 @@ export default class Store {
 
     #wipe = (originalObject) => {
         for (let key in originalObject) {
-            if (key !== "id" && typeof(originalObject[key]) !== "function") {
+            if (key !== "id" && typeof (originalObject[key]) !== "function") {
                 delete originalObject[key];
             }
         }
     };
 
-    #error (error) {
+    #error(error) {
         error = error.message || error;
         this.pubSub.publish("error", error);
         return Promise.reject(error);
@@ -356,7 +356,7 @@ export default class Store {
         return this.#deleteByFilter(object.getModel().getType(), filterFunction);
     };
 
-    #deleteByFilter (type, filterFunction) {
+    #deleteByFilter(type, filterFunction) {
 
         return this._getPromise(type)
             .then(() => {
@@ -371,14 +371,14 @@ export default class Store {
             });
     };
 
-    _getPromise (type, ifLoaded=false) {
+    _getPromise(type, ifLoaded = false) {
         if (!this.models[type]) {
             return Promise.reject("The model doesn't exist");
         } else if (!this.models[type].promise && !this.options.lazyLoad) {
             return Promise.reject("The model is not loaded");
         } else if (!this.models[type].promise && this.options.lazyLoad && !ifLoaded) {
             return this.#loadObjects(type)
-                .then(() =>  this.models[type].promise);
+                .then(() => this.models[type].promise);
         } else if (!this.models[type].promise && this.options.lazyLoad && ifLoaded) {
             return Promise.resolve();
         } else {
@@ -414,12 +414,12 @@ export default class Store {
             fingerprint: wrapper.getFingerprint(),
             object: wrapper,
             status
-        }
+        };
 
         return wrapper;
     };
 
-    #loadObjects (type) {
+    #loadObjects(type) {
         const item = this.models[type];
 
         this.pubSub.publish("loading", {status: "start", model: type});
@@ -434,7 +434,7 @@ export default class Store {
         return item.promise;
     };
 
-    getCollection (type) {
+    getCollection(type) {
         return this._getPromise(type)
             .then(() => {
                 return Object.values(this.models[type].storedObjects)

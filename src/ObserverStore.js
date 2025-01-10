@@ -22,19 +22,20 @@
  * SOFTWARE.
  */
 
-import { v4 as uuidv4 } from "uuid";
+import {v4 as uuidv4} from "uuid";
 import batchPromises from "batch-promises";
 import PersistentStore from "./PersistentStore";
 
 class ObserverStore extends PersistentStore {
     #queryPromises = [];
     #unsubPromises = [];
+
     constructor(options) {
         super(options);
         this._subscribed = {};
         this._multipleSubscribed = {};
 
-        if (options.autoRefresh && typeof(options.autoRefresh) === "number") {
+        if (options.autoRefresh && typeof (options.autoRefresh) === "number") {
             setInterval(this.refresh, options.autoRefresh);
         }
     };
@@ -48,8 +49,8 @@ class ObserverStore extends PersistentStore {
         };
 
         Promise.all(subscriptions
-            .map(sub  => {
-                const [name, filterFunction=null] = sub;
+            .map(sub => {
+                const [name, filterFunction = null] = sub;
 
                 const wrappedCallback = (data) => {
                     dataPayload[name] = data;
@@ -173,9 +174,9 @@ class ObserverStore extends PersistentStore {
         }
 
         return Object.values(out);
-    }
+    };
 
-    #propagateChange = (objects=[]) => {
+    #propagateChange = (objects = []) => {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
             .then(() => {
                 if (objects.length) {
@@ -211,11 +212,11 @@ class ObserverStore extends PersistentStore {
 
     reset = (type) => {
         return this._refresh(type, true);
-    }
+    };
 
     refresh = (type) => {
         return this._refresh(type, false);
-    }
+    };
 
     _refresh = (type, force) => {
 
@@ -235,9 +236,9 @@ class ObserverStore extends PersistentStore {
                             this.pubSub.publish("refresh", {status: "end", model: type});
 
                             return item.promise;
-                        })
+                        });
                 });
-        }
+        };
 
         if (type) {
             return refreshByType(type);
@@ -253,7 +254,7 @@ class ObserverStore extends PersistentStore {
         originalObject.update();
     };
 
-    #propagateInsertChange (type, newObjects) {
+    #propagateInsertChange(type, newObjects) {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
             .then(() => {
                 if (this._subscribed[type]) {
@@ -295,7 +296,6 @@ class ObserverStore extends PersistentStore {
     };
 
 }
-
 
 
 export default ObserverStore;
