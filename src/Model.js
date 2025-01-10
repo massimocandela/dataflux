@@ -277,7 +277,7 @@ export default class Model {
 
         if (json && typeof (json) === "object") {
             for (let obj of Object.values(json)) {
-                if (typeof (obj) === "object") {
+                if (obj && typeof (obj) === "object") {
                     this.#removeHiddenFields(obj);
                 }
             }
