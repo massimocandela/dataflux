@@ -101,6 +101,7 @@
     "brembo": "^2.1.5",
     "crc-32": "^1.2.2",
     "moment": "^2.30.1",
+    "object-fingerprint": "^1.1.2",
     "redaxios": "^0.5.1",
     "uuid": "^9.0.1"
   },

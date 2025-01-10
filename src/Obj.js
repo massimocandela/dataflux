@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import fingerprint from "./fingerprint";
+import fingerprint from "object-fingerprint";
 import {BasicObj, setValues} from "./BasicObj";
 import SubObj from "./SubObj";
 
