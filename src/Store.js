@@ -438,6 +438,7 @@ export default class Store {
         return this._getPromise(type)
             .then(() => {
                 return Object.values(this.models[type].storedObjects)
+                    .filter(i => i.status !== "deleted")
                     .map(i => i.object)
                     .sort((a, b) => a.getId().localeCompare(b.getId()))
                     .map(i => i.toJSON());
