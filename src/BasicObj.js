@@ -28,7 +28,7 @@ import {v4 as uuidv4} from "uuid";
 export const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 const globalError = "_object";
 
-export function setValues (values, model, SubObj, parent, context) {
+export function setValues(values, model, SubObj, parent, context) {
 
     if (!values) {
         throw new Error(`The parameter "values" cannot be null`);
@@ -57,6 +57,7 @@ export class BasicObj {
     #id = null;
     #error = {};
     #model;
+
     constructor(values, model) {
         this.#model = model;
     };
@@ -100,12 +101,12 @@ export class BasicObj {
         return this.update();
     };
 
-    getError = (attribute=null) => {
+    getError = (attribute = null) => {
         const key = attribute ? attribute : globalError;
         return this.#error[key] ?? false;
     };
 
-    setError = (error, attribute=null) => {
+    setError = (error, attribute = null) => {
 
         if (error && attribute) {
             this.#error[attribute] = error;
@@ -133,11 +134,11 @@ export class BasicObj {
                 out[a] = this[a].toISOString();
             } else if (this[a] instanceof Date) {
                 out[a] = moment(this[a]).toISOString();
-            } else if (typeof(this[a]) === "object" && this[a].toJSON) {
+            } else if (typeof (this[a]) === "object" && this[a].toJSON) {
                 out[a] = this[a].toJSON();
-            } else if (Array.isArray(this[a]) && this[a].every(i => typeof(i) === "object" && i.toJSON)) {
+            } else if (Array.isArray(this[a]) && this[a].every(i => typeof (i) === "object" && i.toJSON)) {
                 out[a] = this[a].map(i => i.toJSON());
-            } else if (typeof(this[a]) !== "function") {
+            } else if (typeof (this[a]) !== "function") {
                 out[a] = this[a];
             }
         }

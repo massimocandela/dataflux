@@ -28,6 +28,7 @@ export default class SubObj extends BasicObj {
     #model;
     #parent;
     #parentField;
+
     constructor(parent, field, values, model) {
         super(values, model);
         this.#model = model;
@@ -37,9 +38,9 @@ export default class SubObj extends BasicObj {
         setValues(values, model, SubObj, this.#parent, this);
     };
 
-    set =(attribute, value, hidden) => {
+    set = (attribute, value, hidden) => {
         return super.set(attribute, value, hidden);
-    }
+    };
 
     save = () => {
         return this.#model.getStore().save([this.#parent]);

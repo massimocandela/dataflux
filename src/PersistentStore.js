@@ -64,6 +64,10 @@ export default class PersistentStore extends Store {
     };
 
     save = () => {
+        return this._save(true);
+    };
+
+    _save = (force = true) => {
         this._busy = true;
         this.pubSub.publish("save", "start");
 
@@ -71,7 +75,11 @@ export default class PersistentStore extends Store {
             clearTimeout(this._delayedSaveTimer);
         }
 
-        return Promise.all(Object.keys(this.models).filter(m => this.models[m].model.options.autoSave !== false).map(i => this._saveByType(i, true)))
+        return Promise.all(
+            Object.keys(this.models)
+                .filter(m => this.models[m].model.options.autoSave !== false || force) // explicit false check (null = true)
+                .map(i => this._saveByType(i, true))
+        )
             .then(data => {
                 this._busy = false;
                 this.pubSub.publish("save", "end");
@@ -161,7 +169,7 @@ export default class PersistentStore extends Store {
                 }
                 this._delayedSavePromise = resolve;
                 this._delayedSaveTimer = setTimeout(() => {
-                    resolve(this.save());
+                    resolve(this._save(false));
                     this._delayedSavePromise = null;
                 }, this.options.saveDelay);
             } else {
