@@ -69,7 +69,7 @@ export default class Obj extends BasicObj {
     };
 
     getFingerprint = () => {
-        return fingerprint(this.toJSON());
+        return fingerprint(this.toJSON()).toString();
     };
 
     getRelation = (type, filterFunction) => {

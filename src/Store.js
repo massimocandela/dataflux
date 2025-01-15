@@ -282,10 +282,14 @@ export default class Store {
 
                             if (currentObject) {
                                 currentObject.deleted = false;
+
+                                if (currentObject.status === "deleted") {
+                                    currentObject.status = "old";
+                                }
                                 const newFingerprint = wrapper.getFingerprint();
                                 const oldFingerprint = currentObject.fingerprint;
 
-                                if (oldFingerprint !== newFingerprint) { // Nothing to do otherwise
+                                if (oldFingerprint !== newFingerprint || force) { // Nothing to do otherwise
                                     if (force) {
                                         this.#wipe(currentObject.object);
                                         this.#merge(currentObject.object, wrapper.toJSON());
@@ -294,7 +298,7 @@ export default class Store {
 
                                     } else if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
 
-                                        // Nothing for now
+                                        // Nothing
 
                                     } else { // Update with the new object
                                         this.#merge(currentObject.object, wrapper.toJSON());
