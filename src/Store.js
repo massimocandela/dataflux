@@ -207,14 +207,13 @@ export default class Store {
     }
 
     _getDiffSync = (type) => {
-        const objects = Object.values(this.models[type].storedObjects);
+        const objects = Object.values(this.models[type].storedObjects).filter(i => !i.object?.isMock());
 
         const inserted = [];
         const updated = [];
         const deleted = [];
 
         for (let object of objects) {
-
             if (object.status === "new") {
                 inserted.push(object);
             } else if (object.status === "deleted") {
@@ -443,6 +442,7 @@ export default class Store {
             .then(() => {
                 return Object.values(this.models[type].storedObjects)
                     .filter(i => i.status !== "deleted")
+                    .filter(i => i.status !== "mock")
                     .map(i => i.object)
                     .sort((a, b) => a.getId().localeCompare(b.getId()))
                     .map(i => i.toJSON());
