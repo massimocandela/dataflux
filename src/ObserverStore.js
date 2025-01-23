@@ -180,12 +180,16 @@ class ObserverStore extends PersistentStore {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
             .then(() => {
                 if (objects.length) {
-                    const type = objects[0].getModel().getType();
-                    const uniqueSubs = this.#getUniqueSubs(objects, type);
+                    const type = objects?.[0]?.getModel()?.getType();
+                    if (type) {
+                        const uniqueSubs = this.#getUniqueSubs(objects, type);
 
-                    batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
-                        return this.find(type, filterFunction).then(callback);
-                    });
+                        batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
+                            return this.find(type, filterFunction).then(callback);
+                        });
+                    } else {
+                        console.log("Malformed update list", objects);
+                    }
                 }
 
                 return objects;
