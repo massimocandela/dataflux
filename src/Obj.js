@@ -87,4 +87,5 @@ export default class Obj extends BasicObj {
     update = () => {
         return this.getModel().getStore().update([this]);
     };
+
 }

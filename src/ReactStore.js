@@ -23,6 +23,7 @@
  */
 
 import ObserverStore from "./ObserverStore";
+import {v4 as uuidv4} from "uuid";
 
 export default class ReactStore extends ObserverStore {
     constructor(options) {
@@ -31,17 +32,13 @@ export default class ReactStore extends ObserverStore {
 
     didUpdate = (context) => {
         const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
-        const _f = objects.map(i => i.getFingerprint()).join(".");
-
-        if (_f !== context.___obs_f) {
-            context.forceUpdate();
-        }
-
-        context.___obs_f = _f;
+        objects.forEach((object) => {
+            this.findOne(object.getModel().getType(), uuidv4(), context, n => object.getId() === n.getId());
+        });
     };
 
     #addSubscriptionToContext = (context, subKey) => { // I know...
-        context.___obs_subkeys = context.___obs_subkeys || [];
+        context.___obs_subkeys ??= [];
         context.___obs_subkeys.push(subKey);
         context.___obs_unsubscribe_context = this;
         context.___obs_unsubscribe = () => {

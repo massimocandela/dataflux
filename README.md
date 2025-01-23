@@ -296,7 +296,7 @@ class BookView extends React.Component {
 ```
 If you now do `books[0].set("price", 18)`, the BookView object will not update the price. You could address this by adding a `key={book.getFingerprint()}` prop. However, this approach forces the mounting of the component at every object change.
 
-A better approach is to use the method `didUpdate()` inside `componentDidUpdate` to check if any of the objects in the props changed. 
+A better approach is to use the method `didUpdate()` as below 
 
 ```jsx
 class BookView extends React.Component {
@@ -304,7 +304,7 @@ class BookView extends React.Component {
     super(props);
   }
 
-  componentDidUpdate() {
+  componentDidMount() {
     store.didUpdate(this);
   }
   

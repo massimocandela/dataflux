@@ -1,29 +1,24 @@
 const chai = require("chai");
 const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
-const chaiSubset = require('chai-subset');
+const chaiSubset = require("chai-subset");
 chai.use(chaiSubset);
 const expect = chai.expect;
 
-const fakeReactComponent = function (){
+const fakeReactComponent = function (props) {
     this.state = {};
-    this.props = {};
+    this.props = props;
     this.render = null;
     this.componentDidMount = () => true;
-    this.componentDidUpdate = () => true;
     this.setState = (data) => {
         this.state = data;
         this.render(this.state, this.props);
     };
-    this.forceUpdate = () => {
-        this.render(this.state, this.props);
-    }
     this.componentWillUnmount = null;
 
     setTimeout(() => this.componentDidMount(), 1000);
-    setInterval(() => this.componentDidUpdate(), 5000);
 };
 
-describe("Store React", function() {
+describe("Store React", function () {
 
     it("findAll - no filter function", function (done) {
         const store = createTestStore({
@@ -40,7 +35,7 @@ describe("Store React", function() {
             const expected = JSON.stringify(expectedBooks.map(i => i.isbn).sort());
             expect(obtained).to.equal(expected);
             done();
-        }
+        };
 
         component.componentDidMount = () => {
             store.findAll("book", "books", component);
@@ -63,7 +58,7 @@ describe("Store React", function() {
 
             expect(JSON.stringify(data.map(i => i.id).sort())).to.equal(JSON.stringify(filtered.map(i => i.id).sort()));
             done();
-        }
+        };
 
         component.componentDidMount = () => {
             store.findAll("author", "authors", component, filter);
@@ -79,9 +74,9 @@ describe("Store React", function() {
         const component = new fakeReactComponent();
 
         component.render = (state) => {
-            expect(typeof(component.componentWillUnmount)).to.equal("function");
+            expect(typeof (component.componentWillUnmount)).to.equal("function");
             done();
-        }
+        };
 
         component.componentDidMount = () => {
             store.findAll("author", "authors", component);
@@ -104,11 +99,11 @@ describe("Store React", function() {
                 setTimeout(() => first.load(), 2000);
                 once = false;
             } else {
-                const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, Third Edition","authorId":0,"pages":472};
+                const expected = {"isbn": "9781593279509", "title": "Eloquent JavaScript, Third Edition", "authorId": 0, "pages": 472};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
-        }
+        };
 
         component.componentDidMount = () => {
             store.findAll("book", "books", component);
@@ -131,11 +126,11 @@ describe("Store React", function() {
                 setTimeout(() => first.load(), 2000);
                 once = false;
             } else {
-                const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, Third Edition","authorId":0,"pages":472};
+                const expected = {"isbn": "9781593279509", "title": "Eloquent JavaScript, Third Edition", "authorId": 0, "pages": 472};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
-        }
+        };
 
         component.componentDidMount = () => {
             store.findOne("book", "book", component);
@@ -158,12 +153,12 @@ describe("Store React", function() {
             if (times === 0) {
                 setTimeout(() => first.load(), 2000);
             } else if (times === 1) {
-                const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, Third Edition","authorId":0,"pages":472};
+                const expected = {"isbn": "9781593279509", "title": "Eloquent JavaScript, Third Edition", "authorId": 0, "pages": 472};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
             times++;
-        }
+        };
 
         component.componentDidMount = () => {
             store.findOne("book", "book", component);
@@ -186,15 +181,15 @@ describe("Store React", function() {
                 setTimeout(() => {
                     first.set("title", "Eloquent JavaScript, First Edition");
                 }, 4000);
-                const expected = {"isbn":"9781593279509"};
+                const expected = {"isbn": "9781593279509"};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
             } else if (times === 1) {
-                const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, First Edition"};
+                const expected = {"isbn": "9781593279509", "title": "Eloquent JavaScript, First Edition"};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
             }
             times++;
-        }
+        };
 
         component.componentDidMount = () => {
             store.findOne("book", "book", component);
@@ -202,35 +197,45 @@ describe("Store React", function() {
 
     }).timeout(10000);
 
-    it ("props - component did update", function (done) {
+    it("props - component did update", function (done) {
+        let once = true;
+
         const store = createTestStore({
             autoSave: false,
             lazyLoad: true
         });
+
         const component = new fakeReactComponent();
-        const subcomponent = new fakeReactComponent();
 
-        subcomponent.componentDidUpdate = () => {
-            store.didUpdate(subcomponent);
-        }
-        subcomponent.render = (state, props) => {
-            expect(props.book.name).to.equal("pedro");
-            done();
-        }
+        component.render = () => {
 
-        component.render = (state, props) => {
-            subcomponent.props = {
-                book: state.book
+            if (component?.state?.book) {
+                const subcomponent = new fakeReactComponent({
+                    book: component.state.book
+                });
+
+                subcomponent.componentDidMount = () => {
+                    store.didUpdate(subcomponent);
+                };
+
+                subcomponent.render = () => {
+                    expect(subcomponent.props.book.name).to.equal("pedro");
+                    if (once) {
+                        done();
+                    }
+                    once = false;
+                };
+
             }
-        }
+        };
 
         component.componentDidMount = () => {
-            store.findOne("book", "book", component);
-            setTimeout(() => component.state.book.set("name", "pedro"), 3000)
+            setTimeout(() => store.findOne("book", "book", component), 2000);
+            setTimeout(() => component.state.book.set("name", "pedro"), 3000);
         };
     }).timeout(60000);
 
-    it ("hasChanged - test diff", function (done) {
+    it("hasChanged - test diff", function (done) {
         let once = false;
         const store = createTestStore({
             autoSave: false,
@@ -244,7 +249,7 @@ describe("Store React", function() {
                 done();
                 once = true;
             }
-        }
+        };
 
         component.componentDidMount = () => {
             store.findOne("book", "book", component);
