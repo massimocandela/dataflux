@@ -40,6 +40,7 @@ export default class Model {
     #axios;
     #loadFunction;
     #hiddenFields;
+    ready;
 
     constructor(name, options = {}, defaults = {}) {
         this.#type = name;
@@ -222,6 +223,8 @@ export default class Model {
                 if (!Array.isArray(data)) {
                     this.#singleItemQuery = true;
                 }
+
+                this.ready = true;
 
                 return this.#toArray(data);
             })

@@ -48,6 +48,10 @@ export default class Store {
         return Object.keys(this.models);
     };
 
+    getModel = (type) => {
+        return this.models[type]?.model;
+    };
+
     on(channel, callback) {
         this.pubSub.subscribe(channel, callback);
     };
