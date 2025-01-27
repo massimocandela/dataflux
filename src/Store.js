@@ -246,6 +246,9 @@ export default class Store {
                     this.#insertObject(type, item, "old");
                 }
                 this.pubSub.publish("loading", {status: "end", model: type});
+            })
+            .catch(() => {
+                delete item.promise;
             });
 
         return item.promise;
@@ -271,7 +274,10 @@ export default class Store {
                                 .factory(object.object)
                                 .then(items => {
                                     list = list.concat(items);
-                                });
+                                })
+                                .catch(() => {
+                                    delete item.promise;
+                                }); // Nothing
                         })
                             .then(() => list);
                     })

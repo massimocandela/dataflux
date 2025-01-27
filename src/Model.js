@@ -83,7 +83,7 @@ export default class Model {
         this.#batchSize = 4; // For HTTP requests in parallel if your API doesn't support multiple resources
 
         if (this.options.autoRefresh && typeof (this.options.autoRefresh) === "number") {
-            setInterval(() => {this.getStore().refresh(this.#type);}, this.options.autoRefresh);
+            setInterval(() => {this.getStore().refresh(this.#type).catch(() => {});}, this.options.autoRefresh);
         }
     };
 
