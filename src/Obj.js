@@ -51,6 +51,8 @@ export default class Obj extends BasicObj {
         return super.set(attribute, value, hidden);
     };
 
+    isLoaded = () => this.#loaded;
+
     load = () => {
         if (this.#loaded) {
             return Promise.resolve(this);
