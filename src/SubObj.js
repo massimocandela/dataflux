@@ -38,6 +38,8 @@ export default class SubObj extends BasicObj {
         setValues(values, model, SubObj, this.#parent, this);
     };
 
+    getParent = () => this.#parent;
+
     set = (attribute, value, hidden) => {
         return super.set(attribute, value, hidden);
     };
