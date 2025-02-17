@@ -51,23 +51,25 @@ export default class Obj extends BasicObj {
         return super.set(attribute, value, hidden);
     };
 
-    isLoaded = () => this.#loaded;
+    shouldLoad = (reset = null) => {
+        if (reset === null) {
+            return !!this.#loaded;
+        } else {
+            this.#loaded = false;
+        }
+    };
 
     load = () => {
-        if (this.#loaded) {
-            return Promise.resolve(this);
-        } else {
+        if (!this.#loaded) {
             const model = this.getModel();
 
-            return model
+            this.#loaded = model
                 .load(this)
-                .then(() => {
-                    this.#loaded = true;
-
-                    return model.getStore().update([this], true); // Propagate update
-                })
+                .then(() => model.getStore().update([this], true)) // Propagate update
                 .then(() => this); // return always this
         }
+
+        return this.#loaded;
     };
 
     getFingerprint = () => {

@@ -347,6 +347,7 @@ export default class Store {
     };
 
     #wipe = (originalObject) => {
+        originalObject?.shouldLoad(true);
         for (let key in originalObject) {
             if (key !== "id" && typeof (originalObject[key]) !== "function") {
                 delete originalObject[key];
