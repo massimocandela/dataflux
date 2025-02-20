@@ -53,7 +53,7 @@ export default class Obj extends BasicObj {
 
     shouldLoad = (reset = null) => {
         if (reset === null) {
-            return !!this.#loaded;
+            return !this.#loaded;
         } else {
             this.#loaded = false;
         }
