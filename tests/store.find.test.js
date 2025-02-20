@@ -52,6 +52,7 @@ describe("Store find", function () {
                             "authorId": 0,
                             "pages": 472
                         };
+                        expect(first.shouldLoad()).to.equal(false);
                         expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                         done();
                     });
