@@ -60,16 +60,20 @@ export default class Obj extends BasicObj {
     };
 
     load = () => {
-        if (!this.#loaded) {
-            const model = this.getModel();
+        if (this.isMock()) {
+            return Promise.reject("You cannot perform load on a mock object. Use factory instead.");
+        } else {
+            if (!this.#loaded) {
+                const model = this.getModel();
 
-            this.#loaded = model
-                .load(this)
-                .then(() => model.getStore().update([this], true)) // Propagate update
-                .then(() => this); // return always this
+                this.#loaded = model
+                    .load(this)
+                    .then(() => model.getStore().update([this], true)) // Propagate update
+                    .then(() => this); // return always this
+            }
+
+            return this.#loaded;
         }
-
-        return this.#loaded;
     };
 
     getFingerprint = () => {
