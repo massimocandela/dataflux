@@ -55,8 +55,6 @@ export default class PersistentStore extends Store {
 
                 if (inserted.length === 0 && updated.length === 0 && deleted.length === 0) {
                     return true;
-                } else if (this.options.autoSave) {
-                    return this._saveDiff(type, {inserted, updated, deleted});
                 } else {
                     return Promise.reject("Save must be invoked manually");
                 }
