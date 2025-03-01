@@ -353,6 +353,13 @@ export default class Model {
         const operation = "update";
         return executeHook(operation, this.#updateHook, this.#unWrap(objects), this.#axios)
             .then(data => {
+
+                if (Array.isArray(data) && Array.isArray(objects) && objects.length === data.length) {
+                    for (let i = 0; i < data.length; i++) {
+                        setValues(data[i], this, SubObj, objects[i], objects[i]);
+                    }
+                }
+
                 this.#cleanApiError(objects);
                 return data;
             })

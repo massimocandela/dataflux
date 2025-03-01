@@ -30,13 +30,13 @@ export default class ReactStore extends ObserverStore {
         super(options);
     };
 
-    didUpdate = (context) => {
+    didUpdate = (context, who) => {
         const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
 
         objects.forEach((object) => {
 
             if (object?.getParent) {
-                this.findOne(object.getParent().getModel().getType(), uuidv4(), context, n => object.getParent().getId() === n.getId() || object.getParent().id === n.id);
+                this.findOne(object.getParent().getModel().getType(), uuidv4(), context, n => object.getParent().getId() === n.getId());
             } else {
                 this.findOne(object.getModel().getType(), uuidv4(), context, n => object.getId() === n.getId());
             }

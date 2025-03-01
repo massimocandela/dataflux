@@ -51,14 +51,14 @@ export default class PersistentStore extends Store {
 
     whenSaved = (type) => {
         return this.getDiff(type)
-            // .then(({inserted, updated, deleted}) => {
-            //
-            //     if (inserted.length === 0 && updated.length === 0 && deleted.length === 0) {
-            //         return true;
-            //     } else {
-            //         return Promise.reject("Save must be invoked manually");
-            //     }
-            // });
+            .then(({inserted, updated, deleted}) => {
+
+                if (inserted.length === 0 && updated.length === 0 && deleted.length === 0) {
+                    return true;
+                } else {
+                    return Promise.reject("Save must be invoked manually");
+                }
+            });
     };
 
     save = () => {

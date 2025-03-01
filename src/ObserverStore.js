@@ -127,12 +127,16 @@ class ObserverStore extends PersistentStore {
     };
 
     update(objects, skipSave) {
-        if (!skipSave) {
-            this.#propagateChange(objects);
-        }
+        if (objects?.filter(i => !!i)?.length) {
+            if (!skipSave) {
+                this.#propagateChange(objects);
+            }
 
-        return super.update(objects, skipSave)
-            .then(this.#propagateChange);
+            return super.update(objects, skipSave)
+                .then(data => {
+                    return this.#propagateChange(data);
+                });
+        }
     };
 
     insert(type, objects) {
@@ -184,7 +188,7 @@ class ObserverStore extends PersistentStore {
                     if (type) {
                         const uniqueSubs = this.#getUniqueSubs(objects, type);
 
-                        batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
+                        return batchPromises(10, uniqueSubs, ({callback, filterFunction}) => {
                             return this.find(type, filterFunction).then(callback);
                         });
                     } else {
@@ -251,13 +255,6 @@ class ObserverStore extends PersistentStore {
         }
     };
 
-    #merge = (originalObject, newObject) => {
-        for (let key in newObject) {
-            originalObject[key] = newObject[key];
-        }
-        originalObject.update();
-    };
-
     #propagateInsertChange(type, newObjects) {
         return (this.#unsubPromises.length ? Promise.all(this.#unsubPromises) : Promise.resolve())
             .then(() => {
@@ -276,7 +273,7 @@ class ObserverStore extends PersistentStore {
 
                     const possibleSubs = Object.values(uniqueSubs);
 
-                    batchPromises(10, possibleSubs, ({callback, filterFunction, subKey}) => {
+                    return batchPromises(10, possibleSubs, ({callback, filterFunction, subKey}) => {
 
                         const objectsToSubscribe = filterFunction ? newObjects.filter(filterFunction) : newObjects;
 
