@@ -36,7 +36,7 @@ export default class ReactStore extends ObserverStore {
         objects.forEach((object) => {
 
             if (object?.getParent) {
-                this.findOne(object.getParent().getModel().getType(), uuidv4(), context, n => object.getParent().getId() === n.getId());
+                this.findOne(object.getParent().getModel().getType(), uuidv4(), context, n => object.getParent().getId() === n.getId() || object.getParent().id === n.id);
             } else {
                 this.findOne(object.getModel().getType(), uuidv4(), context, n => object.getId() === n.getId());
             }
