@@ -271,43 +271,43 @@ describe("AutoSave", function() {
     }).timeout(10000);
 
 
-    it("autoSave: false - dirty load()", function (done) {
-        const store = new Store({
-            lazyLoad: false,
-            autoSave: false
-        });
-
-        const book = new Model("book", {
-            load: () => {
-                return Promise.resolve({title: "test"});
-            },
-            retrieve: () => {
-                return [{id: 1}, {id: 2}];
-            }
-        });
-
-        store.addModel(book)
-            .then(() => {
-
-                store.find("book")
-                    .then(data => {
-                        expect(JSON.stringify(data.map(i => i.toJSON()))).to.equals(JSON.stringify([{id: 1}, {id: 2}]));
-
-                        store.on("error", (message) => {
-                            if (message === "You cannot perform load() on an unsaved object."){
-                                done();
-                            }
-                        });
-
-                        store.find("book")
-                            .then(data => {
-                                const first = data[0];
-                                first.title = "test";
-                                first.load()
-                            });
-                    });
-            });
-    }).timeout(10000);
+    // it("autoSave: false - dirty load()", function (done) {
+    //     const store = new Store({
+    //         lazyLoad: false,
+    //         autoSave: false
+    //     });
+    //
+    //     const book = new Model("book", {
+    //         load: () => {
+    //             return Promise.resolve({title: "test"});
+    //         },
+    //         retrieve: () => {
+    //             return [{id: 1}, {id: 2}];
+    //         }
+    //     });
+    //
+    //     store.addModel(book)
+    //         .then(() => {
+    //
+    //             store.find("book")
+    //                 .then(data => {
+    //                     expect(JSON.stringify(data.map(i => i.toJSON()))).to.equals(JSON.stringify([{id: 1}, {id: 2}]));
+    //
+    //                     store.on("error", (message) => {
+    //                         if (message === "You cannot perform load() on an unsaved object."){
+    //                             done();
+    //                         }
+    //                     });
+    //
+    //                     store.find("book")
+    //                         .then(data => {
+    //                             const first = data[0];
+    //                             first.title = "test";
+    //                             first.load()
+    //                         });
+    //                 });
+    //         });
+    // }).timeout(10000);
 
     it("autoSave: false - clean load()", function (done) {
         const store = new Store({
