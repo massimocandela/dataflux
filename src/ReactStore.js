@@ -30,7 +30,7 @@ export default class ReactStore extends ObserverStore {
         super(options);
     };
 
-    didUpdate = (context, who) => {
+    didUpdate = (context) => {
         const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
 
         objects.forEach((object) => {
