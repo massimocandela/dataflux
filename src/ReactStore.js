@@ -30,17 +30,18 @@ export default class ReactStore extends ObserverStore {
         super(options);
     };
 
+    syncState = (object, key, context) => {
+        if (object?.getParent) {
+            this.findOne(object.getParent().getModel().getType(), key, context, n => object.getParent().getId() === n.getId());
+        } else {
+            this.findOne(object.getModel().getType(), key, context, n => object.getId() === n.getId());
+        }
+    };
+
     didUpdate = (context) => {
         const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
 
-        objects.forEach((object) => {
-
-            if (object?.getParent) {
-                this.findOne(object.getParent().getModel().getType(), uuidv4(), context, n => object.getParent().getId() === n.getId());
-            } else {
-                this.findOne(object.getModel().getType(), uuidv4(), context, n => object.getId() === n.getId());
-            }
-        });
+        objects.forEach(object => this.syncState(object, uuidv4(), context));
     };
 
     #addSubscriptionToContext = (context, subKey) => { // I know...
