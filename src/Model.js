@@ -341,7 +341,7 @@ export default class Model {
         if (Array.isArray(data) && Array.isArray(objects) && objects.length === data.length) {
 
             for (let i = 0; i < data.length; i++) {
-                setValues(data[i], this, SubObj, null, objects[i]);
+                setValues(data[i], this, SubObj, objects[i], objects[i]);
                 objects[i].setId(data[i].id);
 
                 delete objects[i].setId;
