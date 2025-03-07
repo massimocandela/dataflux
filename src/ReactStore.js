@@ -31,10 +31,23 @@ export default class ReactStore extends ObserverStore {
     };
 
     syncState = (object, key, context) => {
-        if (object?.getParent) {
-            this.findOne(object.getParent().getModel().getType(), key, context, n => object.getParent().getId() === n.getId());
+        context.___obs_sync_state ??= {};
+        if (context.___obs_sync_state && context.___obs_sync_state[key]) {
+            this.unsubscribe(context.___obs_sync_state[key]);
+            delete context.___obs_sync_state[key];
+        }
+
+        if (object) {
+            if (object?.getParent) {
+                const parent = object.getParent();
+                context.___obs_sync_state[key] = this.findOne(parent.getModel().getType(), key, context, n => parent.getId() === n.getId() || parent.id === n.id);
+            } else {
+                context.___obs_sync_state[key] = this.findOne(object.getModel().getType(), key, context, n => object.getId() === n.getId() || object.id === n.id);
+            }
+
+            return context.___obs_sync_state[key];
         } else {
-            this.findOne(object.getModel().getType(), key, context, n => object.getId() === n.getId());
+            context.setState({...context.state, [key]: null});
         }
     };
 
@@ -71,6 +84,8 @@ export default class ReactStore extends ObserverStore {
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
+
+        return subKey;
     };
 
     findOne(type, stateAttribute, context, filterFunction) {
@@ -86,6 +101,8 @@ export default class ReactStore extends ObserverStore {
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
+
+        return subKey;
     };
 
     #fixState(stateAttribute, context, one) {
