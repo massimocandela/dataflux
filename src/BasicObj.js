@@ -42,9 +42,27 @@ export function setValues(values, model, SubObj, parent, context) {
                 const mmnt = moment(value);
                 context[key] = mmnt.isValid() ? mmnt : value;
             } else if (model.options.deep && value != null && typeof (value) === "object" && !Array.isArray(value)) {
-                context[key] = new SubObj(parent, key, value, model);
+                if (context[key] && typeof (context[key]) === "object") {
+                    setValues(value, model, SubObj, parent, context[key]);
+                } else {
+                    context[key] = new SubObj(parent, key, value, model);
+                }
             } else if (model.options.deep && value != null && Array.isArray(value) && !value.some(str => ["string", "number"].includes(typeof (str)))) {
-                context[key] = value.map(i => new SubObj(parent, key, i, model));
+
+                const out = [];
+
+                value.forEach((item, order) => {
+                    const old = context[key]?.find(i => i.id === item?.id);
+
+                    if (old && old.id && typeof (old) === "object") {
+                        setValues(item, model, SubObj, parent, old);
+                        out.push(old);
+                    } else {
+                        out.push(new SubObj(parent, key, item, model));
+                    }
+                });
+
+                context[key] = out;
             } else {
                 context[key] = value;
             }
