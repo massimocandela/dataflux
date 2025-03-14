@@ -131,7 +131,7 @@ export default class Model {
         }
     };
 
-    load = (obj) => {
+    load = (obj, callback) => {
 
         if (this.#loadFunction) {
 
@@ -149,7 +149,8 @@ export default class Model {
                             url: res,
                             responseType: "json"
                         })
-                            .then(data => data.data);
+                            .then(data => data.data)
+                            .then(data => callback ? callback(data) : data);
                     } else {
                         return res;
                     }

@@ -59,7 +59,7 @@ export default class Obj extends BasicObj {
         }
     };
 
-    load = () => {
+    load = (callback) => {
         if (this.isMock()) {
             return Promise.reject("You cannot perform load on a mock object. Use factory instead.");
         } else {
@@ -67,7 +67,7 @@ export default class Obj extends BasicObj {
                 const model = this.getModel();
 
                 this.#loaded = model
-                    .load(this)
+                    .load(this, callback)
                     .then(() => model.getStore().update([this], true)) // Propagate update
                     .then(() => this); // return always this
             }
