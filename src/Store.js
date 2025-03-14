@@ -302,7 +302,7 @@ export default class Store {
                                     if (force) {
                                         this.#wipe(currentObject.object);
                                         this.#merge(currentObject.object, wrapper.toJSON());
-                                        currentObject.fingerprint = newFingerprint;
+                                        currentObject.fingerprint = currentObject.object.getFingerprint();
                                         updated.push(currentObject.object);
 
                                     } else if (this.hasChanged(type, currentObject.object)) { // Was the object edited locally?
@@ -311,7 +311,7 @@ export default class Store {
 
                                     } else { // Update with the new object
                                         this.#merge(currentObject.object, wrapper.toJSON());
-                                        currentObject.fingerprint = newFingerprint;
+                                        currentObject.fingerprint = currentObject.object.getFingerprint();
                                         updated.push(currentObject.object);
                                     }
                                 }
