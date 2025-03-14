@@ -60,20 +60,27 @@ export default class ReactStore extends ObserverStore {
     #addSubscriptionToContext = (context, subKey) => { // I know...
         context.___obs_subkeys ??= [];
         context.___obs_subkeys.push(subKey);
-        context.___obs_unsubscribe_context = this;
-        context.___obs_unsubscribe = () => {
-            for (let key of context.___obs_subkeys || []) {
-                context.___obs_unsubscribe_context.unsubscribe(key);
-            }
-        };
-        context.___obs_original_componentWillUnmount = context?.componentWillUnmount;
-        context.componentWillUnmount = function () {
-            context._isMounted = false;
-            context.___obs_unsubscribe();
-            if (context.___obs_original_componentWillUnmount) {
-                context.___obs_original_componentWillUnmount();
-            }
-        };
+
+        if (!context.___obs_unsubscribe_attached) {
+            context.___obs_unsubscribe_context = this;
+            context.___obs_original_componentWillUnmount = context?.componentWillUnmount;
+
+            context.___obs_unsubscribe = () => {
+                for (let key of context.___obs_subkeys || []) {
+                    context.___obs_unsubscribe_context.unsubscribe(key);
+                }
+            };
+
+            context.componentWillUnmount = function () {
+                context._isMounted = false;
+                context.___obs_unsubscribe();
+                if (context.___obs_original_componentWillUnmount) {
+                    context.___obs_original_componentWillUnmount();
+                }
+            };
+        }
+
+        context.___obs_unsubscribe_attached = true;
     };
 
     findAll(type, stateAttribute, context, filterFunction) {
