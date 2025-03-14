@@ -66,8 +66,11 @@ export default class ReactStore extends ObserverStore {
                 context.___obs_unsubscribe_context.unsubscribe(key);
             }
         };
+        context.___obs_original_componentWillUnmount = context.componentWillUnmount;
         context.componentWillUnmount = function () {
+            context._isMounted = false;
             context.___obs_unsubscribe();
+            context.___obs_original_componentWillUnmount();
         };
     };
 
