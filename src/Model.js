@@ -52,6 +52,7 @@ export default class Model {
             lazyLoad: options.lazyLoad ?? defaults.lazyLoad,
             validate: options.validate ?? defaults.validate ?? {},
             autoSave: options.autoSave ?? defaults.autoSave ?? null,
+            skipMerge: options.skipMerge ?? defaults.skipMerge ?? false,
             autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false,
             pre: options.pre ?? defaults.pre ?? null,
             hiddenFields: options.hiddenFields ?? defaults.hiddenFields ?? [],
