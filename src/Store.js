@@ -387,9 +387,9 @@ export default class Store {
 
     _getPromise(type, ifLoaded = false) {
         if (!this.models[type]) {
-            return Promise.reject("The model doesn't exist");
+            return Promise.reject(`The model ${type} doesn't exist`);
         } else if (!this.models[type].promise && !this.options.lazyLoad) {
-            return Promise.reject("The model is not loaded");
+            return Promise.reject(`The model ${type} is not loaded`);
         } else if (!this.models[type].promise && this.options.lazyLoad && !ifLoaded) {
             return this.#loadObjects(type)
                 .then(() => this.models[type].promise);
