@@ -47,17 +47,7 @@ export default class ReactStore extends ObserverStore {
 
             return context.___obs_sync_state[key];
         } else {
-            // Check if component is still mounted before calling setState
-            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
-                try {
-                    context.setState({...context.state, [key]: null});
-                } catch (error) {
-                    // Safely handle setState errors in React 18 strict mode
-                    if (context._isMounted !== false) {
-                        console.warn('DataFlux: setState failed', error);
-                    }
-                }
-            }
+            this.#safeSetState(context, {...context.state, [key]: null});
         }
     };
 
@@ -65,6 +55,19 @@ export default class ReactStore extends ObserverStore {
         const objects = Object.values((context?.props ?? {})).filter(i => i?.isDataflux?.());
 
         objects.forEach(object => this.syncState(object, uuidv4(), context));
+    };
+
+    #safeSetState = (context, stateUpdate) => {
+        // Check if component is still mounted before calling setState
+        // This prevents warnings in React 18 concurrent mode
+        if ((context._isMounted === undefined || context._isMounted) && context.setState) {
+            try {
+                context.setState(stateUpdate);
+            } catch (error) {
+                // Safely handle setState errors in React 18 strict mode
+                console.warn('DataFlux: setState failed', error);
+            }
+        }
     };
 
     #addSubscriptionToContext = (context, subKey) => { // I know...
@@ -105,21 +108,10 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, false);
 
         const subKey = this.subscribe(type, data => {
-            // Check if component is still mounted before calling setState
-            // This prevents warnings in React 18 concurrent mode
-            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
-                try {
-                    context.setState({
-                        ...context.state,
-                        [stateAttribute]: data || []
-                    });
-                } catch (error) {
-                    // Safely handle setState errors in React 18 strict mode
-                    if (context._isMounted !== false) {
-                        console.warn('DataFlux: setState failed', error);
-                    }
-                }
-            }
+            this.#safeSetState(context, {
+                ...context.state,
+                [stateAttribute]: data || []
+            });
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
@@ -131,21 +123,10 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, true);
 
         const subKey = this.subscribe(type, data => {
-            // Check if component is still mounted before calling setState
-            // This prevents warnings in React 18 concurrent mode
-            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
-                try {
-                    context.setState({
-                        ...context.state,
-                        [stateAttribute]: data && data.length ? data[0] : null
-                    });
-                } catch (error) {
-                    // Safely handle setState errors in React 18 strict mode
-                    if (context._isMounted !== false) {
-                        console.warn('DataFlux: setState failed', error);
-                    }
-                }
-            }
+            this.#safeSetState(context, {
+                ...context.state,
+                [stateAttribute]: data && data.length ? data[0] : null
+            });
         }, filterFunction);
 
         this.#addSubscriptionToContext(context, subKey);
