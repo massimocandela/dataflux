@@ -47,7 +47,17 @@ export default class ReactStore extends ObserverStore {
 
             return context.___obs_sync_state[key];
         } else {
-            context.setState({...context.state, [key]: null});
+            // Check if component is still mounted before calling setState
+            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
+                try {
+                    context.setState({...context.state, [key]: null});
+                } catch (error) {
+                    // Safely handle setState errors in React 18 strict mode
+                    if (context._isMounted !== false) {
+                        console.warn('DataFlux: setState failed', error);
+                    }
+                }
+            }
         }
     };
 
@@ -71,11 +81,19 @@ export default class ReactStore extends ObserverStore {
                 }
             };
 
+            // Use a function expression to preserve 'this' context properly
+            // Compatible with React 18 and concurrent features
+            const originalUnmount = context.___obs_original_componentWillUnmount;
             context.componentWillUnmount = function () {
+                // Mark as unmounted before cleanup to prevent state updates during unmount
                 context._isMounted = false;
+                
+                // Clean up subscriptions
                 context.___obs_unsubscribe();
-                if (context.___obs_original_componentWillUnmount) {
-                    context.___obs_original_componentWillUnmount();
+                
+                // Call original componentWillUnmount if it exists
+                if (originalUnmount) {
+                    originalUnmount.call(this);
                 }
             };
         }
@@ -87,11 +105,20 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, false);
 
         const subKey = this.subscribe(type, data => {
-            if (context._isMounted === undefined || context._isMounted) {
-                context.setState({
-                    ...context.state,
-                    [stateAttribute]: data || []
-                });
+            // Check if component is still mounted before calling setState
+            // This prevents warnings in React 18 concurrent mode
+            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
+                try {
+                    context.setState({
+                        ...context.state,
+                        [stateAttribute]: data || []
+                    });
+                } catch (error) {
+                    // Safely handle setState errors in React 18 strict mode
+                    if (context._isMounted !== false) {
+                        console.warn('DataFlux: setState failed', error);
+                    }
+                }
             }
         }, filterFunction);
 
@@ -104,11 +131,20 @@ export default class ReactStore extends ObserverStore {
         this.#fixState(stateAttribute, context, true);
 
         const subKey = this.subscribe(type, data => {
-            if (context._isMounted === undefined || context._isMounted) {
-                context.setState({
-                    ...context.state,
-                    [stateAttribute]: data && data.length ? data[0] : null
-                });
+            // Check if component is still mounted before calling setState
+            // This prevents warnings in React 18 concurrent mode
+            if ((context._isMounted === undefined || context._isMounted) && context.setState) {
+                try {
+                    context.setState({
+                        ...context.state,
+                        [stateAttribute]: data && data.length ? data[0] : null
+                    });
+                } catch (error) {
+                    // Safely handle setState errors in React 18 strict mode
+                    if (context._isMounted !== false) {
+                        console.warn('DataFlux: setState failed', error);
+                    }
+                }
             }
         }, filterFunction);
 

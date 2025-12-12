@@ -105,5 +105,13 @@
     "redaxios": "^0.5.1",
     "uuid": "^10.0.0"
   },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "resolutions": {}
 }
