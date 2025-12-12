@@ -23,6 +23,12 @@ Using jsDelivr CDN:
 <script src="https://cdn.jsdelivr.net/npm/dataflux/dist/dataflux.min.js"></script>
 ```
 
+## React Compatibility
+
+DataFlux supports **React 16.8+**, including **React 18** with its new concurrent features and lifecycle improvements. The library automatically handles state updates safely, preventing warnings in React 18's StrictMode and concurrent rendering.
+
+For React hooks usage, see [Example 6](#example-6---observability--react).
+
 ## Examples
 
 Create your global store by creating a file (e.g., named `store.js`) containing the model declaration.
@@ -194,6 +200,8 @@ You can use two methods: `findOne`, and `findAll` (which are a react-specific sy
 
 **_Since the store is able to detect changes deep in a nested structure, you will not have to worry about the component not re-rendering. Also, the setState will be triggered ONLY when the next change of the dataset is impacting your selection._**
 
+DataFlux is fully compatible with **React 18**, including StrictMode and concurrent features. The library automatically handles cleanup and prevents setState calls on unmounted components.
+
 React Component example:
 ```jsx
 class MyComponent extends React.Component {
@@ -232,7 +240,7 @@ class MyComponent extends React.Component {
 
 The method `findAll` returns always an array. The method `findOne` returns a single object (if multiple objects satisfy the query, the first is returned).
 
-When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll()` injects the unsubscribe call inside `componentWillUnmount()`. If your component already implements `componentWillUnmount()`, then you will have to use `store.subscribe()` and `store.unsubscribe()` instead of `store.findAll()`, to avoid side effects when the component is unmounted.
+When the component will unmount, the `findAll` subscription will be automatically terminated without the need to unsubscribe. Be aware, `store.findAll()` injects the unsubscribe call inside `componentWillUnmount()`. If your component already implements `componentWillUnmount()`, DataFlux will preserve and call your original implementation after performing its cleanup, ensuring compatibility with React 18's lifecycle.
 
 > Note: handleChange allows for type casting. E.g., store.handleChange(book, "pages", parseInt)
 
