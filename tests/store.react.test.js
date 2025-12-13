@@ -9,8 +9,8 @@ const fakeReactComponent = function (props) {
     this.props = props;
     this.render = null;
     this.componentDidMount = () => true;
-    this.setState = (data) => {
-        this.state = data;
+    this.setState = (fun) => {
+        this.state = fun(this.state);
         this.render(this.state, this.props);
     };
     this.componentWillUnmount = null;

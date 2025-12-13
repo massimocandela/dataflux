@@ -47,7 +47,7 @@ export default class ReactStore extends ObserverStore {
 
             return context.___obs_sync_state[key];
         } else {
-            context.setState({...context.state, [key]: null});
+            setTimeout(() => context.setState(prev => ({...prev, [key]: null})), 0);
         }
     };
 
@@ -85,13 +85,11 @@ export default class ReactStore extends ObserverStore {
 
     findAll(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, false);
+        context._isMounted = true;
 
         const subKey = this.subscribe(type, data => {
-            if (context._isMounted === undefined || context._isMounted) {
-                context.setState({
-                    ...context.state,
-                    [stateAttribute]: data || []
-                });
+            if (context._isMounted) {
+                setTimeout(() => context.setState(prev => ({...prev, [stateAttribute]: data || []})), 0);
             }
         }, filterFunction);
 
@@ -102,13 +100,11 @@ export default class ReactStore extends ObserverStore {
 
     findOne(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, true);
+        context._isMounted = true;
 
         const subKey = this.subscribe(type, data => {
-            if (context._isMounted === undefined || context._isMounted) {
-                context.setState({
-                    ...context.state,
-                    [stateAttribute]: data && data.length ? data[0] : null
-                });
+            if (context._isMounted) {
+                setTimeout(context.setState(prev => ({...prev, [stateAttribute]: data && data.length ? data[0] : null})), 0);
             }
         }, filterFunction);
 
