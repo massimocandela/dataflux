@@ -63,8 +63,8 @@ describe("Model factory", function() {
         store.addModel(author3);
         store.factory("author3", {id: 4});
 
-        store.on("save", (status) => {
-            if (status === "end"){
+        store.on("save", ({model, status}) => {
+            if (status === "end" && model === "author3"){
                 expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([{"name":"Addy","surname":"Osmani","id":4,"test":true}]));
                 expect(JSON.stringify(sets.inserted)).to.equals(JSON.stringify([]));
                 done();
@@ -111,8 +111,8 @@ describe("Model factory", function() {
         store.addModel(author3);
         store.factory("author3", {id: 4});
 
-        store.on("save", (status) => {
-            if (status === "end"){
+        store.on("save", ({status, model}) => {
+            if (status === "end" && model === "author3"){
                 expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
                 expect(JSON.stringify(sets.inserted)).to.equals(JSON.stringify([]));
                 done();

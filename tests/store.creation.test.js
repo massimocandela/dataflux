@@ -238,7 +238,7 @@ describe("Store and models creation", function() {
 
                 first.set("isbn", "test");
 
-                store.on("save", (status) => {
+                store.on("save", ({status}) => {
                     if (status === "end") {
                         if (once) {
                             once = false;

@@ -13,8 +13,8 @@ describe("Store refresh", function () {
             autoSave: true,
             lazyLoad: false
         });
-        store.on("save", (status) => {
-            if (status === "end") {
+        store.on("save", ({model, status}) => {
+            if (status === "end" && model === "book") {
                 store.find("book", ({title}) => title === "A new book")
                     .then(([d]) => {
                         expect(d.id).to.equals(34);

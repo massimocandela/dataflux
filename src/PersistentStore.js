@@ -67,7 +67,6 @@ export default class PersistentStore extends Store {
 
     _save = (force = true) => {
         this._busy = true;
-        this.pubSub.publish("save", "start");
 
         if (this._delayedSaveTimer) {
             clearTimeout(this._delayedSaveTimer);
@@ -80,13 +79,11 @@ export default class PersistentStore extends Store {
         )
             .then(data => {
                 this._busy = false;
-                this.pubSub.publish("save", "end");
 
                 return data;
             })
             .catch(error => {
                 this._busy = false;
-                this.pubSub.publish("save", "end");
                 this.pubSub.publish("error", error);
                 return Promise.reject(error);
             });
@@ -150,8 +147,15 @@ export default class PersistentStore extends Store {
     };
 
     _saveByType = (type, ifLoaded) => {
+        this.pubSub.publish("save", {status: "start", model: type});
+
         return this.getDiff(type, ifLoaded)
-            .then(diff => this._saveDiff(type, diff));
+            .then(diff => this._saveDiff(type, diff))
+            .then(data => {
+                this.pubSub.publish("save", {status: "end", model: type});
+
+                return data;
+            });
     };
 
     delayedSave = () => {
