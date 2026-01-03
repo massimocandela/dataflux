@@ -147,15 +147,24 @@ export default class PersistentStore extends Store {
     };
 
     _saveByType = (type, ifLoaded) => {
-        this.pubSub.publish("save", {status: "start", model: type});
 
         return this.getDiff(type, ifLoaded)
-            .then(diff => this._saveDiff(type, diff))
-            .then(data => {
-                this.pubSub.publish("save", {status: "end", model: type});
+            .then(diff => {
 
-                return data;
+                const someChanges = diff.inserted.length > 0 || diff.updated.length > 0 || diff.deleted.length > 0;
+                if (someChanges) {
+                    this.pubSub.publish("save", {status: "start", model: type});
+                }
+                return this._saveDiff(type, diff)
+                    .then(data => {
+                        if (someChanges) {
+                            this.pubSub.publish("save", {status: "end", model: type});
+                        }
+
+                        return data;
+                    });
             });
+
     };
 
     delayedSave = () => {

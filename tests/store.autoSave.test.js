@@ -535,14 +535,12 @@ describe("AutoSave", function () {
                             done(new Error(message));
                         });
 
-                        store.on("save", ({status}) => {
-                            if (status === "end") {
-                                expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
-                                done();
-                            }
-                        });
-
                         store.save();
+
+                        setTimeout(() => {
+                            expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
+                            done();
+                        }, 3000)
                     });
             });
     }).timeout(10000);
