@@ -9,3 +9,4 @@ tests/
 .github/
 _config.yml
 CNAME
+.nvmrc
