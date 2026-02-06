@@ -84,6 +84,8 @@ export class BasicObj {
 
     isMock = () => false;
 
+
+
     setId = (id) => {
         this.id = id;
     };
