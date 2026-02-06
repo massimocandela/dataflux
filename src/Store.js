@@ -169,6 +169,7 @@ export default class Store {
 
                     item.fingerprint = object.object.getFingerprint();
                     item.status = "old";
+                    item.isPersisted = () => true;
                 }
 
                 for (let object of deleted) {
@@ -404,6 +405,8 @@ export default class Store {
         const model = this.models[type].model;
         const wrapper = new Obj(item, model);
         const id = wrapper.getId();
+
+        wrapper.isPersisted = () => false;
 
         if (this.models[type].storedObjects[id]) {
             throw new Error(`The IDs provided for the model ${type} are not unique`);

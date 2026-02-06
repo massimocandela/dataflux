@@ -84,7 +84,7 @@ export class BasicObj {
 
     isMock = () => false;
 
-
+    isPersisted = () => true;
 
     setId = (id) => {
         this.id = id;
