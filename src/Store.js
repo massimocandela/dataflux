@@ -169,7 +169,7 @@ export default class Store {
 
                     item.fingerprint = object.object.getFingerprint();
                     item.status = "old";
-                    item.isPersisted = () => true;
+                    item.object.isPersisted = () => true;
                 }
 
                 for (let object of deleted) {
@@ -406,7 +406,9 @@ export default class Store {
         const wrapper = new Obj(item, model);
         const id = wrapper.getId();
 
-        wrapper.isPersisted = () => false;
+        if (status === "new" || status === "mock") {
+            wrapper.isPersisted = () => false;
+        }
 
         if (this.models[type].storedObjects[id]) {
             throw new Error(`The IDs provided for the model ${type} are not unique`);
@@ -418,6 +420,7 @@ export default class Store {
 
         if (status === "mock") {
             wrapper.isMock = () => true;
+
             wrapper.insert = () => {
                 this.models[type].storedObjects[id].status = "new";
                 wrapper.isMock = () => false;

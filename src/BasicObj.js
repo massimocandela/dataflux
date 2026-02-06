@@ -82,9 +82,9 @@ export class BasicObj {
 
     isDataflux = () => true;
 
-    isMock = () => false;
-
     isPersisted = () => true;
+
+    isMock = () => false;
 
     setId = (id) => {
         this.id = id;

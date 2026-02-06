@@ -137,4 +137,24 @@ describe("Store find", function () {
                 done();
             });
     }).timeout(10000);
+
+    it("isPersisted", function (done) {
+        store.find("author", ({name}) => name === "Nicolás")
+            .then(([author]) => {
+                expect(author.isPersisted()).to.equal(true);
+            })
+            .then(store.insert("author", {name: "Test"}))
+            .then(() => store.find("author", ({name}) => name === "Test"))
+            .then(([author]) => {
+                expect(author.isPersisted()).to.equal(false);
+
+                return author;
+            })
+            .then(author => author.save().then(() => author))
+            .then(author => {
+                expect(author.isPersisted()).to.equal(true);
+                done();
+            });
+
+    }).timeout(10000);
 });
