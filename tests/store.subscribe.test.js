@@ -1,6 +1,6 @@
 const chai = require("chai");
 const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
-const chaiSubset = require('chai-subset');
+const chaiSubset = require("chai-subset");
 chai.use(chaiSubset);
 const expect = chai.expect;
 
@@ -9,7 +9,7 @@ const store = createTestStore({
     lazyLoad: true
 });
 
-describe("Store subscribe", function() {
+describe("Store subscribe", function () {
 
     it("loading collection - no filter function", function (done) {
         const pkey = store.subscribe("book", (data) => {
@@ -38,7 +38,7 @@ describe("Store subscribe", function() {
             const str = JSON.stringify(data);
 
             if (once) {
-                expect(str === '[{"id":190,"name":"test"}]').to.equal(true);
+                expect(str === "[{\"id\":190,\"name\":\"test\"}]").to.equal(true);
                 done();
             } else {
                 once = true;
@@ -72,7 +72,7 @@ describe("Store subscribe", function() {
                 setTimeout(() => first.load(), 2000);
                 once = false;
             } else {
-                const expected = {"isbn":"9781593279509","title":"Eloquent JavaScript, Third Edition","authorId":0,"pages":472};
+                const expected = {"isbn": "9781593279509", "title": "Eloquent JavaScript, Third Edition", "authorId": 0, "pages": 472};
                 expect(JSON.stringify(first.toJSON())).to.equal(JSON.stringify(expected));
                 done();
                 store.unsubscribe(pkey);
@@ -129,7 +129,7 @@ describe("Store subscribe", function() {
         store.unsubscribe(subKey3);
 
         setTimeout(() => {
-            expect(store._subscribed).to.deep.equal({ book: {}, author: {} });
+            expect(store._subscribed).to.deep.equal({book: {}, author: {}});
             done();
         }, 5000);
 

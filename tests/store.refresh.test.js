@@ -1,6 +1,6 @@
 const chai = require("chai");
 const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
-const chaiSubset = require('chai-subset');
+const chaiSubset = require("chai-subset");
 const {Store, Model} = require("../src");
 chai.use(chaiSubset);
 const expect = chai.expect;
@@ -41,7 +41,7 @@ describe("Store refresh", function () {
 
         store.find("test")
             .then((data) => {
-                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ])
+                expect(data.map(i => i.toJSON())).to.deep.equals([{id: 1}, {id: 2}]);
             });
 
         store.on("refresh", ({status}) => {
@@ -49,7 +49,7 @@ describe("Store refresh", function () {
                 store.find("test")
                     .then((data) => {
                         expect(data.map(i => i.toJSON())).to.deep
-                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                            .equals([{id: 1, content: "a"}, {id: 2, content: "b"}]);
                         done();
                     });
             }
@@ -76,12 +76,12 @@ describe("Store refresh", function () {
         });
         store.addModel(test);
 
-        store.factory("test", {id:1});
-        store.factory("test", {id:2});
+        store.factory("test", {id: 1});
+        store.factory("test", {id: 2});
 
         store.find("test")
             .then((data) => {
-                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ]);
+                expect(data.map(i => i.toJSON())).to.deep.equals([{id: 1}, {id: 2}]);
             });
 
         store.on("refresh", ({status}) => {
@@ -89,7 +89,7 @@ describe("Store refresh", function () {
                 store.find("test")
                     .then((data) => {
                         expect(data.map(i => i.toJSON())).to.deep
-                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                            .equals([{id: 1, content: "a"}, {id: 2, content: "b"}]);
                         done();
                     });
             }
@@ -119,7 +119,7 @@ describe("Store refresh", function () {
 
         store.find("test")
             .then((data) => {
-                expect(data.map(i => i.toJSON())).to.deep.equals([ { id: 1 }, { id: 2 } ])
+                expect(data.map(i => i.toJSON())).to.deep.equals([{id: 1}, {id: 2}]);
             });
 
         store.on("refresh", ({status}) => {
@@ -128,7 +128,7 @@ describe("Store refresh", function () {
                 store.find("test")
                     .then((data) => {
                         expect(data.map(i => i.toJSON())).to.deep
-                            .equals([ { id: 1, content: 'a' }, { id: 2, content: 'b' } ]);
+                            .equals([{id: 1, content: "a"}, {id: 2, content: "b"}]);
                         done();
                     });
             }

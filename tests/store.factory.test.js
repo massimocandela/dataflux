@@ -1,12 +1,12 @@
 const chai = require("chai");
 const {createTestStore, expectedBooks, expectedAuthors} = require("./store");
-const chaiSubset = require('chai-subset');
+const chaiSubset = require("chai-subset");
 const {Store, Model} = require("../src");
 const fs = require("fs");
 chai.use(chaiSubset);
 const expect = chai.expect;
 
-describe("Model factory", function() {
+describe("Model factory", function () {
 
     it("factory creation", function (done) {
         const store = createTestStore({
@@ -26,7 +26,7 @@ describe("Model factory", function() {
 
         store.find("author3")
             .then(([object]) => {
-                expect(JSON.stringify(object.toJSON())).to.equal(JSON.stringify({ name: 'Addy', surname: 'Osmani', id: 4 }));
+                expect(JSON.stringify(object.toJSON())).to.equal(JSON.stringify({name: "Addy", surname: "Osmani", id: 4}));
                 done();
             });
     }).timeout(6000);
@@ -64,8 +64,8 @@ describe("Model factory", function() {
         store.factory("author3", {id: 4});
 
         store.on("save", ({model, status}) => {
-            if (status === "end" && model === "author3"){
-                expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([{"name":"Addy","surname":"Osmani","id":4,"test":true}]));
+            if (status === "end" && model === "author3") {
+                expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([{"name": "Addy", "surname": "Osmani", "id": 4, "test": true}]));
                 expect(JSON.stringify(sets.inserted)).to.equals(JSON.stringify([]));
                 done();
             }
@@ -116,7 +116,7 @@ describe("Model factory", function() {
             expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
             expect(JSON.stringify(sets.inserted)).to.equals(JSON.stringify([]));
             done();
-        }, 3000)
+        }, 3000);
 
     }).timeout(10000);
 
@@ -136,7 +136,7 @@ describe("Model factory", function() {
             lazyLoad: true,
             axios,
             retrieve: ({id}) => {
-                return `https://api.example.net/authors/${id}`
+                return `https://api.example.net/authors/${id}`;
             }
         });
 
@@ -153,7 +153,7 @@ describe("Model factory", function() {
 
         const author3 = new Model("author3", {
             retrieve: () => {
-                return ["test1", "test2"]
+                return ["test1", "test2"];
             }
         });
 
@@ -161,7 +161,7 @@ describe("Model factory", function() {
         store.find("author3")
             .then(([author]) => {
                 const current = JSON.stringify(author.toJSON());
-                const expected = JSON.stringify({value: [ 'test1', 'test2' ]});
+                const expected = JSON.stringify({value: ["test1", "test2"]});
                 expect(current).to.equals(expected);
                 done();
             });

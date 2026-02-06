@@ -1,5 +1,5 @@
 const chai = require("chai");
-const chaiSubset = require('chai-subset');
+const chaiSubset = require("chai-subset");
 const {Store, Model} = require("../src/index");
 const {expectedBooks} = require("./store");
 chai.use(chaiSubset);
@@ -7,7 +7,7 @@ const expect = chai.expect;
 
 console.warn = () => {}; // Shut up
 
-describe("Store and models creation", function() {
+describe("Store and models creation", function () {
 
     it("duplicated model", function (done) {
         const store = new Store({
@@ -82,7 +82,7 @@ describe("Store and models creation", function() {
 
         store.find("book")
             .then(data => {
-               const first = data[0];
+                const first = data[0];
 
                 first.set("title", "test");
             });
@@ -117,7 +117,7 @@ describe("Store and models creation", function() {
         setTimeout(() => {
             expect(failed).to.equals(false);
             done();
-        },3000)
+        }, 3000);
     }).timeout(4000);
 
     it("autoSave: 4000", function (done) {
@@ -166,7 +166,7 @@ describe("Store and models creation", function() {
             },
             validate: {
                 isbn: ({isbn}) => {
-                    if (typeof(isbn) !== "number") {
+                    if (typeof (isbn) !== "number") {
                         throw new Error("The isbn must be a number");
                     }
                 }
@@ -222,7 +222,7 @@ describe("Store and models creation", function() {
             },
             validate: {
                 isbn: ({isbn}) => {
-                    if (typeof(isbn) !== "number") {
+                    if (typeof (isbn) !== "number") {
                         throw new Error("The isbn must be a number");
                     }
                 }
@@ -247,12 +247,12 @@ describe("Store and models creation", function() {
                             setTimeout(() => {
                                 first.set("isbn", 123);
                                 store.save();
-                            }, 10000)
+                            }, 10000);
                         } else {
                             expect(updated).to.deep.equals([{
                                 isbn: 123,
                                 potato: 2,
-                                title: 'Eloquent JavaScript, Third Edition',
+                                title: "Eloquent JavaScript, Third Edition",
                                 authorId: 0,
                                 pages: 472
                             }

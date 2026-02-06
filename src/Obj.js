@@ -37,15 +37,19 @@ export default class Obj extends BasicObj {
         this.getModel = () => model;
     };
 
+    delete = (attribute) => {
+        return super.delete(attribute);
+    }
+
     set = (attribute, value, hidden) => {
         if (Array.isArray(value) && this.getModel().options.deep) {
-            value = value.map(i => {
-                if (["boolean", "string", "number"].includes(typeof (i))) {
-                    return i;
-                } else {
-                    return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
-                }
-            });
+                value = value.map(i => {
+                    if (["boolean", "string", "number"].includes(typeof (i))) {
+                        return i;
+                    } else {
+                        return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
+                    }
+                });
         }
 
         return super.set(attribute, value, hidden);

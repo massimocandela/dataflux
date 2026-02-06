@@ -44,6 +44,10 @@ export default class SubObj extends BasicObj {
         return super.set(attribute, value, hidden);
     };
 
+    delete = (attribute) => {
+        return super.delete(attribute);
+    };
+
     save = () => {
         return this.#model.getStore().save([this.#parent]);
     };

@@ -540,7 +540,7 @@ describe("AutoSave", function () {
                         setTimeout(() => {
                             expect(JSON.stringify(sets.updated)).to.equals(JSON.stringify([]));
                             done();
-                        }, 3000)
+                        }, 3000);
                     });
             });
     }).timeout(10000);

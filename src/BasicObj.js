@@ -105,6 +105,14 @@ export class BasicObj {
         return this.#setHidden[attribute] ?? this[attribute] ?? defaultValue;
     };
 
+    delete(attribute) {
+        delete this.#setHidden[attribute];
+        delete this[attribute];
+
+        return this.update();
+    };
+
+
     set(attribute, value, hidden) {
         if (hidden) {
             this.#setHidden[attribute] = value;
