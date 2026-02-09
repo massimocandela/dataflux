@@ -85,7 +85,6 @@ export default class ReactStore extends ObserverStore {
 
     findAll(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, false);
-        context._isMounted ??= true;
 
         const subKey = this.subscribe(type, data => {
             if (context._isMounted) {
@@ -100,7 +99,6 @@ export default class ReactStore extends ObserverStore {
 
     findOne(type, stateAttribute, context, filterFunction) {
         this.#fixState(stateAttribute, context, true);
-        context._isMounted ??= true;
 
         const subKey = this.subscribe(type, data => {
             if (context._isMounted) {
@@ -114,7 +112,9 @@ export default class ReactStore extends ObserverStore {
     };
 
     #fixState(stateAttribute, context, one) {
-        if (!context[stateAttribute]) {
+        context._isMounted ??= true;
+
+        if (context._isMounted && !context[stateAttribute]) {
             context[stateAttribute] = one ? null : []; // side effect on state
         }
     }
