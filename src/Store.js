@@ -98,11 +98,9 @@ export default class Store {
 
     delete(typeOrObjects, filterFunction) {
         if (typeof (typeOrObjects) === "string" && typeof (filterFunction) === "function") {
-            const type = typeOrObjects;
-            return this.#deleteByFilter(type, filterFunction);
+            return this.#deleteByFilter(typeOrObjects, filterFunction);
         } else if (Array.isArray(typeOrObjects) && typeOrObjects.length && !filterFunction) {
-            const objects = typeOrObjects;
-            return Promise.all(objects.map(this.#deleteByObject))
+            return Promise.all(typeOrObjects.map(this.#deleteByObject))
                 .then((data) => data.flat());
         } else {
             const error = "Invalid delete request. You have to provide a list of objects or a type and a filter function";
@@ -379,7 +377,12 @@ export default class Store {
                     .filter(i => filterFunction(i.object));
 
                 for (let object of deleted) {
-                    object.status = "deleted";
+                    if (object.status === "new") {
+                        delete this.models[type].storedObjects[object.getId()];
+                    } else {
+                        object.status = "deleted";
+                    }
+
                 }
 
                 return deleted.map(i => i.object);
