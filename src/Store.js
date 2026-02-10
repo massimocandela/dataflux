@@ -378,7 +378,7 @@ export default class Store {
 
                 for (let object of deleted) {
                     if (object.status === "new") {
-                        delete this.models[type].storedObjects[object.getId()];
+                        delete this.models[type].storedObjects[object.object.getId()];
                     } else {
                         object.status = "deleted";
                     }
