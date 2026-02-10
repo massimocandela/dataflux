@@ -54,6 +54,7 @@ export default class Model {
             autoSave: options.autoSave ?? defaults.autoSave ?? null,
             autoRefresh: options.autoRefresh ?? defaults.autoRefresh ?? false,
             pre: options.pre ?? defaults.pre ?? null,
+            filter: options.filter ?? defaults.filter ?? null,
             hiddenFields: options.hiddenFields ?? defaults.hiddenFields ?? [],
             post: options.post ?? defaults.post ?? null
         };
@@ -229,7 +230,8 @@ export default class Model {
 
                 return this.#toArray(data);
             })
-            .then(data => this.options?.pre ? data.map(n => this.options.pre(n, data)) : data);
+            .then(data => this.options?.pre ? data.map(n => this.options.pre(n, data)) : data)
+            .then(data => this.options?.filter ? data.filter(n => this.options.filter(n, data)) : data);
     };
 
     insertObjects = (objects) => {
