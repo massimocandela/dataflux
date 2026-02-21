@@ -157,4 +157,16 @@ describe("Store find", function () {
             });
 
     }).timeout(10000);
+
+    it("set null", function (done) {
+        store.find("author", ({name}) => name === "Scott")
+            .then(([author]) => {
+                return author.set("surname", null)
+                    .then(() => {
+                        expect(author.surname).to.equal(null);
+                        done();
+                    });
+            });
+
+    }).timeout(10000);
 });

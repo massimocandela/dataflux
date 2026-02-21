@@ -51,7 +51,7 @@ export default class Obj extends BasicObj {
                         return i?.getId ? i : new SubObj(this, "property", i, this.getModel());
                     }
                 });
-            } else if (typeof (value) === "object") {
+            } else if (typeof (value) === "object" && value !== null) {
                 value = value?.getId ? value : new SubObj(this, "property", value, this.getModel());
             }
         }
