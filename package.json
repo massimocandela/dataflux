@@ -95,7 +95,7 @@
     "dotenv-cli": "^11.0.0",
     "mocha": "^11.7.5",
     "release-it": "^19.2.4",
-    "uglifyjs": "^2.4.11"
+    "uglify-js": "^3.19.3"
   },
   "dependencies": {
     "batch-promises": "^0.0.3",
