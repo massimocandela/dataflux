@@ -181,4 +181,8 @@ export class BasicObj {
     update = () => {
         return Promise.resolve();
     };
+
+    hasChanged = () => {
+        return this.#model.getStore().hasChanged(this.#model.getType(), this);
+    }
 }
