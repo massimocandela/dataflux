@@ -136,24 +136,24 @@ export default class Model {
 
         if (this.#loadFunction) {
 
-            return this.getStore()
-                .whenSaved(this.getType())
-                .catch((e) => {
-                    throw new Error("You cannot perform load() on an unsaved object.");
-                })
+            return Promise.resolve()
                 .then(() => {
-                    const res = this.#loadFunction(obj.toJSON()); // toJSON to avoid side effects;
-
-                    if (typeof (res) === "string") {
-                        return this.#axios({
-                            method: "get",
-                            url: res,
-                            responseType: "json"
-                        })
-                            .then(data => data.data)
-                            .then(data => callback ? callback(data) : data);
+                    if (!obj.isPersisted() || obj.hasChanged()) {
+                        return Promise.reject("You cannot perform load() on an unsaved object.")
                     } else {
-                        return res;
+                        const res = this.#loadFunction(obj.toJSON()); // toJSON to avoid side effects;
+
+                        if (typeof (res) === "string") {
+                            return this.#axios({
+                                method: "get",
+                                url: res,
+                                responseType: "json"
+                            })
+                                .then(data => data.data)
+                                .then(data => callback ? callback(data) : data);
+                        } else {
+                            return res;
+                        }
                     }
                 })
                 .then(data => {
