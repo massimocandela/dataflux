@@ -91,7 +91,7 @@ class ObserverStore extends PersistentStore {
     };
 
     unsubscribe = (key) => {
-        this.#unsubPromises = (this.#queryPromises.length
+        const prom = (this.#queryPromises.length
             ? Promise.all(this.#queryPromises)
             : Promise.resolve())
             .then(() => {
@@ -122,8 +122,13 @@ class ObserverStore extends PersistentStore {
                         }
                     }
                 }
+            })
+            .finally(() => {
+                const idx = this.#unsubPromises.indexOf(prom);
+                if (idx !== -1) this.#unsubPromises.splice(idx, 1);
             });
 
+        this.#unsubPromises.push(prom);
     };
 
     update(objects, skipSave) {
