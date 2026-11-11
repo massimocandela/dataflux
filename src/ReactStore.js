@@ -23,7 +23,7 @@
  */
 
 import ObserverStore from "./ObserverStore";
-import {v4 as uuidv4} from "uuid";
+import {uuidv4} from "./uuid";
 
 export default class ReactStore extends ObserverStore {
     constructor(options) {

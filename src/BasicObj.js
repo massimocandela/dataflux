@@ -23,7 +23,7 @@
  */
 
 import moment from "moment/moment";
-import {v4 as uuidv4} from "uuid";
+import {uuidv4} from "./uuid";
 
 export const dateRegex = new RegExp("^[0-9][0-9][0-9][0-9]-[0-9].*T[0-9].*Z$");
 const globalError = "_object";
