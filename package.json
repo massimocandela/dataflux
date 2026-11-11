@@ -81,20 +81,18 @@
         }
     },
     "devDependencies": {
-        "@babel/cli": "^7.29.7",
-        "@babel/core": "^7.29.7",
-        "@babel/node": "^7.29.7",
-        "@babel/plugin-proposal-class-properties": "^7.18.6",
-        "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
-        "@babel/plugin-transform-async-to-generator": "^7.29.7",
-        "@babel/plugin-transform-runtime": "^7.29.7",
-        "@babel/preset-env": "^7.29.7",
+        "@babel/cli": "^8.1.0",
+        "@babel/core": "^8.1.0",
+        "@babel/node": "^8.0.6",
+        "@babel/plugin-transform-private-methods": "^8.0.1",
+        "@babel/plugin-transform-runtime": "^8.0.6",
+        "@babel/preset-env": "^8.0.7",
         "browserify": "^17.0.1",
         "chai": "^6.3.0",
         "chai-subset": "^1.6.0",
         "dotenv-cli": "^11.1.0",
         "mocha": "^12.0.3",
-        "release-it": "^20.2.0",
+        "release-it": "^21.1.2",
         "uglify-js": "^3.19.3"
     },
     "dependencies": {
@@ -104,7 +102,7 @@
         "moment": "^2.31.0",
         "object-fingerprint": "^1.1.4",
         "redaxios": "^0.5.1",
-        "uuid": "^10.0.0"
+        "uuid": "^14.0.3"
     },
     "resolutions": {},
     "engines": {
