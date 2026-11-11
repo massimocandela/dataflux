@@ -1,110 +1,114 @@
 {
-  "name": "dataflux",
-  "version": "1.24.5",
-  "description": "DataFlux, automatically interfaces with your REST APIs to create a 2-way-synced local data store. Transparently manages data propagation in the React state.",
-  "main": "dist/index.js",
-  "bin": "dist/index.js",
-  "scripts": {
-    "babel": "node_modules/.bin/babel",
-    "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register --exit",
-    "compile": "rm -rf dist/ && mkdir -p dist/compiled && ./node_modules/.bin/babel src -d dist/compiled",
-    "browserify": "rm -rf dist/browserified && mkdir -p dist/browserified && ./node_modules/.bin/browserify -r ./dist/compiled/index.js:dataflux  > ./dist/browserified/dataflux.js",
-    "minify": "rm -rf dist/minified && mkdir -p dist/minified && cat ./dist/browserified/dataflux.js | uglifyjs --source-map url=dataflux.min.js.map -o dist/minified/dataflux.min.js",
-    "build": "npm run compile && npm run browserify && npm run minify && mv ./dist/minified/* ./dist/ && mv ./dist/compiled/* ./dist/ &&  rm -r dist/browserified/ dist/compiled/ dist/minified/",
-    "release": "dotenv release-it"
-  },
-  "author": {
-    "name": "Massimo Candela",
-    "url": "https://massimocandela.com"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/massimocandela/dataflux.git"
-  },
-  "keywords": [
-    "data",
-    "React",
-    "REST",
-    "ORM",
-    "browser",
-    "api",
-    "observable",
-    "layer"
-  ],
-  "release-it": {
-    "hooks": {
-      "before:init": [
-        "npm run test",
-        "npm ci"
-      ],
-      "after:bump": [
-        "npm run build"
-      ],
-      "after:release": [
-        "echo Successfully released ${name} v${version} to ${repo.repository}.",
-        "rm -r dist/"
-      ]
+    "name": "dataflux",
+    "version": "1.24.5",
+    "description": "DataFlux, automatically interfaces with your REST APIs to create a 2-way-synced local data store. Transparently manages data propagation in the React state.",
+    "main": "dist/index.js",
+    "bin": "dist/index.js",
+    "scripts": {
+        "babel": "node_modules/.bin/babel",
+        "test": "./node_modules/.bin/mocha tests/*.test.js --require @babel/register --exit",
+        "compile": "rm -rf dist/ && mkdir -p dist/compiled && ./node_modules/.bin/babel src -d dist/compiled",
+        "browserify": "rm -rf dist/browserified && mkdir -p dist/browserified && ./node_modules/.bin/browserify -r ./dist/compiled/index.js:dataflux  > ./dist/browserified/dataflux.js",
+        "minify": "rm -rf dist/minified && mkdir -p dist/minified && cat ./dist/browserified/dataflux.js | uglifyjs --source-map url=dataflux.min.js.map -o dist/minified/dataflux.min.js",
+        "build": "npm run compile && npm run browserify && npm run minify && mv ./dist/minified/* ./dist/ && mv ./dist/compiled/* ./dist/ &&  rm -r dist/browserified/ dist/compiled/ dist/minified/",
+        "release": "dotenv release-it"
     },
-    "git": {
-      "changelog": "git log --pretty=format:\"* %s (%h)\" ${from}...${to}",
-      "requireCleanWorkingDir": true,
-      "requireBranch": "main",
-      "requireUpstream": true,
-      "requireCommits": false,
-      "addUntrackedFiles": false,
-      "commit": true,
-      "commitMessage": "Release v${version}",
-      "commitArgs": [],
-      "tag": true,
-      "tagName": null,
-      "tagAnnotation": "Release v${version}",
-      "tagArgs": [],
-      "push": true,
-      "pushArgs": [
-        "--follow-tags"
-      ],
-      "pushRepo": ""
+    "author": {
+        "name": "Massimo Candela",
+        "url": "https://massimocandela.com"
     },
-    "gitlab": {
-      "release": false
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/massimocandela/dataflux.git"
     },
-    "npm": {
-      "publish": true
+    "keywords": [
+        "data",
+        "React",
+        "REST",
+        "ORM",
+        "browser",
+        "api",
+        "observable",
+        "layer"
+    ],
+    "release-it": {
+        "hooks": {
+            "before:init": [
+                "npm run test",
+                "npm ci"
+            ],
+            "after:bump": [
+                "npm run build"
+            ],
+            "after:release": [
+                "echo Successfully released ${name} v${version} to ${repo.repository}.",
+                "rm -r dist/"
+            ]
+        },
+        "git": {
+            "changelog": "git log --pretty=format:\"* %s (%h)\" ${from}...${to}",
+            "requireCleanWorkingDir": true,
+            "requireBranch": "main",
+            "requireUpstream": true,
+            "requireCommits": false,
+            "addUntrackedFiles": false,
+            "commit": true,
+            "commitMessage": "Release v${version}",
+            "commitArgs": [],
+            "tag": true,
+            "tagName": null,
+            "tagAnnotation": "Release v${version}",
+            "tagArgs": [],
+            "push": true,
+            "pushArgs": [
+                "--follow-tags"
+            ],
+            "pushRepo": ""
+        },
+        "gitlab": {
+            "release": false
+        },
+        "npm": {
+            "publish": true
+        },
+        "github": {
+            "release": true,
+            "releaseName": "v${version}",
+            "tokenRef": "GITHUB_TOKEN",
+            "origin": null,
+            "skipChecks": false
+        }
     },
-    "github": {
-      "release": true,
-      "releaseName": "v${version}",
-      "tokenRef": "GITHUB_TOKEN",
-      "origin": null,
-      "skipChecks": false
+    "devDependencies": {
+        "@babel/cli": "^7.29.7",
+        "@babel/core": "^7.29.7",
+        "@babel/node": "^7.29.7",
+        "@babel/plugin-proposal-class-properties": "^7.18.6",
+        "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+        "@babel/plugin-transform-async-to-generator": "^7.29.7",
+        "@babel/plugin-transform-runtime": "^7.29.7",
+        "@babel/preset-env": "^7.29.7",
+        "browserify": "^17.0.1",
+        "chai": "^6.3.0",
+        "chai-subset": "^1.6.0",
+        "dotenv-cli": "^11.1.0",
+        "mocha": "^12.0.3",
+        "release-it": "^20.2.0",
+        "uglify-js": "^3.19.3"
+    },
+    "dependencies": {
+        "batch-promises": "^0.0.3",
+        "brembo": "^2.2.2",
+        "crc-32": "^1.2.2",
+        "moment": "^2.31.0",
+        "object-fingerprint": "^1.1.4",
+        "redaxios": "^0.5.1",
+        "uuid": "^10.0.0"
+    },
+    "resolutions": {},
+    "engines": {
+        "npm": ">=10.9.9",
+        "node": ">=22.23.4"
     }
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.29.7",
-    "@babel/core": "^7.29.7",
-    "@babel/node": "^7.29.7",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
-    "@babel/plugin-transform-async-to-generator": "^7.29.7",
-    "@babel/plugin-transform-runtime": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
-    "browserify": "^17.0.1",
-    "chai": "^6.2.2",
-    "chai-subset": "^1.6.0",
-    "dotenv-cli": "^11.0.0",
-    "mocha": "^11.7.6",
-    "release-it": "^20.2.0",
-    "uglify-js": "^3.19.3"
-  },
-  "dependencies": {
-    "batch-promises": "^0.0.3",
-    "brembo": "^2.2.2",
-    "crc-32": "^1.2.2",
-    "moment": "^2.30.1",
-    "object-fingerprint": "^1.1.4",
-    "redaxios": "^0.5.1",
-    "uuid": "^10.0.0"
-  },
-  "resolutions": {}
 }
